@@ -55,12 +55,21 @@ fs.readdir("./commands/", (err,files) =>{
 //When bot is turn online
 bot.on("ready", async () => {
   console.log(`${bot.user.username} is online`);
-  bot.user.setActivity("anime with pol", {type: "WATCHING"});
+  bot.user.setActivity("Flirting w/ pol", {type: "PLAYING"});
   //bot.user.setActivity("Flirting w/pol");
 });
 
+bot.on("guildMemberAdd", async member => {
+  console.log(`${member} joined the server`);
+  let logChannel = member.guild.channels.find(`name`, "log-channel");
+  let gamerRole = member.guild.roles.find(`name`, "Glory Gamer");
+      logChannel.send(`New member ${member} joined. Gave the ${gamerRole} role`);
+      member.addRole(gamerRole.id);
+});
+
 bot.on("guildMemberRemove", async member => {
-    let logChannel = channel.guild.channels.find(`name`, "log-channel");
+    console.log(`${member} left the server`);
+    let logChannel = member.guild.channels.find(`name`, "log-channel");
   logChannel.send(`${member} left this server`);
 });
 
@@ -130,7 +139,8 @@ bot.on("message", async message => {
     // }
     //   purge();
 
-   let skill = args.join(" ").slice(0);
+   //let skill = args.join(" ").slice(0);
+   let skill = args.slice(0).join(" ");
    var skillUsed;
    var skillDamage;
    var skillDamage2;
@@ -359,19 +369,19 @@ bot.on("message", async message => {
         playerTwoLife = "〘   〙";
       }
 
-      playerOneLastUsedSkill = skillUsed;
+      //playerOneLastUsedSkill = skillUsed;
       function updateBattle(){
           let skillEmbed = new Discord.RichEmbed();
-          skillEmbed.setDescription(`<@${rAuthor.id}> striked`)
+          skillEmbed.setDescription(`<@${rAuthor.id}> used ${skillUsed}`)
           .setColor("#ff0000")
           .addField("Player 1 hp",`${playerOneLife} ${playerOneHpPercent}% hp left`, true)
           .addField("Player 2 hp",`${playerTwoLife} ${playerTwoHpPercent}% hp left`, true)
-          .addBlankField()
-          .addField("Player 1 last used skill", playerOneLastUsedSkill,true)
-          .addField("Player 2 last used skill", playerTwoLastUsedSkill,true)
-          .addBlankField()
-          .addField(`Damage Done: ${skillDamage}`, `Player 2: ${playerTwoInitialHp}->${playerTwohp}`,true)
-          .addField(`Damage Done: ${skillDamage2}`, `Player 1: ${playerOneInitialHp}->${playerOnehp}`,true);
+          // .addBlankField()
+          // .addField("Player 1 last used skill", playerOneLastUsedSkill,true)
+          // .addField("Player 2 last used skill", playerTwoLastUsedSkill,true)
+          // .addBlankField()
+          // .addField(`Damage Done: ${skillDamage}`, `Player 2: ${playerTwoInitialHp}->${playerTwohp}`,true)
+          // .addField(`Damage Done: ${skillDamage2}`, `Player 1: ${playerOneInitialHp}->${playerOnehp}`,true);
           pkchannel.send(skillEmbed);
           playerOneChannel.send(skillEmbed);
           playerTwoChannel.send(skillEmbed);
@@ -621,19 +631,19 @@ bot.on("message", async message => {
         playerTwoLife = "〘   〙";
       }
 
-      playerTwoLastUsedSkill = skillUsed;
+      //playerTwoLastUsedSkill = skillUsed;
       function updateBattle(){
         let skillEmbed = new Discord.RichEmbed();
-        skillEmbed.setDescription(`<@${rAuthor.id}> striked`)
+        skillEmbed.setDescription(`<@${rAuthor.id}> used ${skillUsed}`)
         .setColor("#0033cc")
         .addField("Player 1 hp",`${playerOneLife} ${playerOneHpPercent}% hp left`, true)
         .addField("Player 2 hp",`${playerTwoLife} ${playerTwoHpPercent}% hp left`, true)
-        .addBlankField()
-        .addField("Player 1 last used skill", playerOneLastUsedSkill,true)
-        .addField("Player 2 last used skill", playerTwoLastUsedSkill,true)
-        .addBlankField()
-        .addField(`Damage Done: ${skillDamage}`, `Player 2: ${playerTwoInitialHp}->${playerTwohp}`,true)
-        .addField(`Damage Done: ${skillDamage2}`, `Player 1: ${playerOneInitialHp}->${playerOnehp}`,true);
+        // .addBlankField()
+        // .addField("Player 1 last used skill", playerOneLastUsedSkill,true)
+        // .addField("Player 2 last used skill", playerTwoLastUsedSkill,true)
+        // .addBlankField()
+        // .addField(`Damage Done: ${skillDamage}`, `Player 2: ${playerTwoInitialHp}->${playerTwohp}`,true)
+        // .addField(`Damage Done: ${skillDamage2}`, `Player 1: ${playerOneInitialHp}->${playerOnehp}`,true);
         pkchannel.send(skillEmbed);
         playerOneChannel.send(skillEmbed);
         playerTwoChannel.send(skillEmbed);
@@ -647,13 +657,15 @@ bot.on("message", async message => {
   }
 
   if(cmd === `${prefix}pk`){
-      let time = "60000";
+    let pkRecord = JSON.parse(fs.readFileSync("./pkrecord.json", "utf8"));
+      let time = "30000"; //30000
+      let pktime = "60000" //60000
       playerOnehp = 1000;
       playerTwohp = 1000;
       playerOneLastUsedSkill="Standing still...";
       playerTwoLastUsedSkill="Standing still...";
 
-      let battletime = (time/1000);
+      let battletime = (pktime/1000);
       let pkchannel = message.guild.channels.find(`name`, "arena");
       //if(!pkchannel) return message.channel.send("Couldn't find pk channel.");
       let playerOneChannel = message.guild.channels.find(`name`, "player-one");
@@ -698,12 +710,18 @@ bot.on("message", async message => {
     //create winloss record if author/user do not have an existing entry in pkrecord.json
     if(!pkRecord[rAuthor.id]) pkRecord[rAuthor.id] = {
       wins: 0,
-      loss: 0
+      loss: 0,
+      elo: 1200
     };
     if(!pkRecord[rUser.id]) pkRecord[rUser.id] = {
       wins: 0,
-      loss: 0
+      loss: 0,
+      elo: 1200
     };
+    // pkRecord = JSON.stringify(pkRecord, null, 2);
+    // fs.writeFile("./pkrecord.json", pkRecord, (err) => {
+    //   if (err) console.log(err);
+    // });
 
     async function purge(){
       //message.delete();
@@ -733,127 +751,214 @@ bot.on("message", async message => {
     pkchannel.send(pkEmbed);
     //if(!pkchannel) return message.channel.send("Couldn't find pk channel.");
     //message.delete().catch(O_o=>{}); //this command deletes the message
+
     setTimeout(function(){
-      purge();
-      if(playerOnehp > playerTwohp){
-        var winner = rAuthor;
-        pkRecord[rAuthor.id].wins++;
-        pkRecord[rUser.id].loss++;
-      }
-      else if(playerTwohp > playerOnehp){
-         var winner = rUser;
-         pkRecord[rUser.id].wins++;
-         pkRecord[rAuthor.id].loss++;
-      }
-      else{
-        winner = "It's a draw."
-      }
 
-      let playerOneHealthBar = Math.round(playerOnehp/200);
-      let playerOneHpPercent = Math.round(playerOnehp/10);
+        rAuthor.removeRole(gRole1.id);
+        pkchannel.send(`<@${rAuthor.id}>'s PlayerOne role has been removed`);
+        rUser.removeRole(gRole2.id);
+        pkchannel.send(`<@${rUser.id}>'s PlayerTwo role has been removed`);
 
-      if(playerOneHealthBar === 5){
-        playerOneLife = "〘 ██████████  〙";
-      }
-      else if(playerOneHealthBar === 4){
-        playerOneLife = "〘 ████████  〙";
-      }
-      else if(playerOneHealthBar === 3){
-        playerOneLife = "〘 ██████  〙";
-      }
-      else if(playerOneHealthBar === 2){
-        playerOneLife = "〘 ████  〙";
-      }
-      else if(playerOneHealthBar === 1){
-        playerOneLife = "〘 ██  〙";
-      }
-      else if(playerOneHealthBar === 0){
-        playerOneLife = "〘   〙";
-      }
+        //---Remove all the excess roles for player1 and player2 after the pk ends---
 
-      let playerTwoHealthBar = Math.round(playerTwohp/200);
-      let playerTwoHpPercent = Math.round(playerTwohp/10);
 
-      if(playerTwoHealthBar === 5){
-        playerTwoLife = "〘 ██████████  〙";
-      }
-      else if(playerTwoHealthBar === 4){
-        playerTwoLife = "〘 ████████  〙";
-      }
-      else if(playerTwoHealthBar === 3){
-        playerTwoLife = "〘 ██████  〙";
-      }
-      else if(playerTwoHealthBar === 2){
-        playerTwoLife = "〘 ████  〙";
-      }
-      else if(playerTwoHealthBar === 1){
-        playerTwoLife = "〘 ██  〙";
-      }
-      else if(playerTwoHealthBar === 0){
-        playerTwoLife = "〘   〙";
-      }
+        pkchannel.send("Finalizing damage done. Result will be displayed in around 30secs...");
 
-      //Show the pk result
-      let endEmbed = new Discord.RichEmbed()
-      .setDescription("Battle ended")
-      .setColor("#15f153")
-      .addField("Winner", `${winner}`)
-      .addField(`Player One `, ` ${playerOneLife} ${playerOneHpPercent}% hp left <@${rAuthor.id}>[${pkRecord[rAuthor.id].wins} W, ${pkRecord[rAuthor.id].loss} L]`, true)
-      .addField(`Player Two `, `${playerTwoLife} ${playerTwoHpPercent}% hp left <@${rUser.id}>[${pkRecord[rUser.id].wins} W, ${pkRecord[rUser.id].loss} L]`, true)
-      pkchannel.send(endEmbed);
-      playerOneChannel.send(endEmbed);
-      playerTwoChannel.send(endEmbed);
+        setTimeout(function(){
+        purge();
 
-      rAuthor.removeRole(gRole1.id);
-      pkchannel.send(`<@${rAuthor.id}>'s PlayerOne role has been removed`);
-      rUser.removeRole(gRole2.id);
-      pkchannel.send(`<@${rUser.id}>'s PlayerTwo role has been removed`);
+        //calculate Elo
+        // function elo(winner, loser){
+        //   // let playerOneWins = pkRecord[rAuthor.id].wins;
+        //   // let playerOneLoss = pkRecord[rAuthor.id].loss;
+        //   // let playerOneElo = pkRecord[rAuthor.id].elo;
+        //   // let playerOneTotal = pkRecord[rAuthor.id].total;
+        //   //
+        //   // let playerTwoWins = pkRecord[rUser.id].wins;
+        //   // let playerTwoLoss = pkRecord[rUser.id].loss;
+        //   // let playerTwoElo = pkRecord[rUser.id].elo;
+        //   // let playerTwoTotal = pkRecord[rUser.id].total;
+        //   pkRecord[winner.id].wins++;
+        //   pkRecord[loser.id].loss++
+        //   pkRecord[winner.id].elo = (pkRecord[winner.id].elo + 25)
+        //   pkRecord[loser.id].elo = (pkRecord[loser.id].elo - 25)
+        // }
 
-      //---Remove all the excess roles for player1 and player2 after the pk ends---
-      //remove player1 excess roles
-      rAuthor.removeRole(gRoleSkyStrike.id);
-      rAuthor.removeRole(gRoleDoubleStab.id);
-      rAuthor.removeRole(gRoleCircleSwing.id);
-      rAuthor.removeRole(gRoleDragonTooth.id);
-      rAuthor.removeRole(gRoleDraconicCrusher.id);
-      rAuthor.removeRole(gRoleFallingFlowerPalm.id);
-      rAuthor.removeRole(gRoleDragonBreaksTheRank.id);
-      rAuthor.removeRole(gRoleRisingDragonSoarsTheSky.id);
-      rAuthor.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
+        if(playerOnehp > playerTwohp){
+          var winner = rAuthor;
+          var loser = rUser;
+          var testDamage;
+          if(playerOnehp<900) testDamage = 0;
 
-      //remove player 2 excess roles
-      rUser.removeRole(gRoleSkyStrike.id);
-      rUser.removeRole(gRoleDoubleStab.id);
-      rUser.removeRole(gRoleCircleSwing.id);
-      rUser.removeRole(gRoleDragonTooth.id);
-      rUser.removeRole(gRoleDraconicCrusher.id);
-      rUser.removeRole(gRoleFallingFlowerPalm.id);
-      rUser.removeRole(gRoleDragonBreaksTheRank.id);
-      rUser.removeRole(gRoleRisingDragonSoarsTheSky.id);
-      rUser.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
-      //---End of remove excess roles---
+              if(testDamage === 0){
+                  pkRecord[rAuthor.id].wins++;
+                  pkRecord[rUser.id].loss++;
+                //  [CODE] add and reduce elo
+                  pkRecord[rAuthor.id].elo = pkRecord[rAuthor.id].elo+25;
+                  pkRecord[rUser.id].elo = pkRecord[rUser.id].elo-25;
+               }
 
-      fs.writeFile("./pkrecord.json", JSON.stringify(pkRecord), (err) => {
-        if (err) console.log(err);
-      });
+        }
+        else if(playerTwohp > playerOnehp){
+           var winner = rUser;
+           var loser = rAuthor;
+           if(playerTwohp<900) testDamage = 0;
 
-      playerOnehp = 1000;
-      playerTwohp = 1000;
-    }, ms(time));
+           if(testDamage === 0){
+             pkRecord[rUser.id].wins++;
+             pkRecord[rAuthor.id].loss++;
+             //[CODE] add and reduce elo
+             pkRecord[rUser.id].elo = pkRecord[rUser.id].elo+25;
+             pkRecord[rAuthor.id].elo = pkRecord[rAuthor.id].elo-25;
+          }
+
+        }
+        else{
+          winner = "It's a draw."
+        }
+
+        let playerOneHealthBar = Math.round(playerOnehp/200);
+        let playerOneHpPercent = Math.round(playerOnehp/10);
+
+        if(playerOneHealthBar === 5){
+          playerOneLife = "〘 ██████████  〙";
+        }
+        else if(playerOneHealthBar === 4){
+          playerOneLife = "〘 ████████  〙";
+        }
+        else if(playerOneHealthBar === 3){
+          playerOneLife = "〘 ██████  〙";
+        }
+        else if(playerOneHealthBar === 2){
+          playerOneLife = "〘 ████  〙";
+        }
+        else if(playerOneHealthBar === 1){
+          playerOneLife = "〘 ██  〙";
+        }
+        else if(playerOneHealthBar === 0){
+          playerOneLife = "〘   〙";
+        }
+
+        let playerTwoHealthBar = Math.round(playerTwohp/200);
+        let playerTwoHpPercent = Math.round(playerTwohp/10);
+
+        if(playerTwoHealthBar === 5){
+          playerTwoLife = "〘 ██████████  〙";
+        }
+        else if(playerTwoHealthBar === 4){
+          playerTwoLife = "〘 ████████  〙";
+        }
+        else if(playerTwoHealthBar === 3){
+          playerTwoLife = "〘 ██████  〙";
+        }
+        else if(playerTwoHealthBar === 2){
+          playerTwoLife = "〘 ████  〙";
+        }
+        else if(playerTwoHealthBar === 1){
+          playerTwoLife = "〘 ██  〙";
+        }
+        else if(playerTwoHealthBar === 0){
+          playerTwoLife = "〘   〙";
+        }
+
+        //Show the pk result
+        if(playerOnehp === playerTwohp){
+          let endEmbed = new Discord.RichEmbed()
+          .setDescription("Battle ended")
+          .setColor("#15f153")
+          .addField("Winner","It's a Draw")
+          .addField("Loser","It's a Draw")
+          .addField(`Player One `, ` ${playerOneLife} ${playerOneHpPercent}% hp left`, true)
+          .addField(`Player Two `, `${playerTwoLife} ${playerTwoHpPercent}% hp left `, true)
+          pkchannel.send(endEmbed);
+        }
+        else if(playerOnehp>900 || playerTwohp>900){
+          let endEmbed = new Discord.RichEmbed()
+          .setDescription("Battle ended")
+          .setColor("#15f153")
+          .addField("``Match not counted. Both players need to deal more than 10% damage.``")
+          .addField("Winner", ` <@${winner.id}>[${pkRecord[winner.id].wins} W, ${pkRecord[winner.id].loss} L]`)
+          .addField("Loser", ` <@${loser.id}>[${pkRecord[loser.id].wins} W, ${pkRecord[loser.id].loss} L]`)
+          .addField(`Player One `, ` ${playerOneLife} ${playerOneHpPercent}% hp left`, true)
+          .addField(`Player Two `, `${playerTwoLife} ${playerTwoHpPercent}% hp left `, true)
+          pkchannel.send(endEmbed);
+        }
+        else{
+          let endEmbed = new Discord.RichEmbed()
+          .setDescription("Battle ended")
+          .setColor("#15f153")
+          .addField("Winner", ` <@${winner.id}>[${pkRecord[winner.id].wins} W, ${pkRecord[winner.id].loss} L]`)
+          .addField("Loser", ` <@${loser.id}>[${pkRecord[loser.id].wins} W, ${pkRecord[loser.id].loss} L]`)
+          .addField(`Player One `, ` ${playerOneLife} ${playerOneHpPercent}% hp left`, true)
+          .addField(`Player Two `, `${playerTwoLife} ${playerTwoHpPercent}% hp left `, true)
+          pkchannel.send(endEmbed);
+          //playerOneChannel.send(endEmbed);
+          //playerTwoChannel.send(endEmbed);
+        }
+
+
+
+        pkRecord = JSON.stringify(pkRecord, null, 2);
+        fs.writeFile("./pkrecord.json", pkRecord, (err) => {
+          if (err) console.log(err);
+        });
+
+        playerOnehp = 1000;
+        playerTwohp = 1000;
+      }, ms(time));
+
+    }, ms(pktime));
+
+    //remove player1 excess roles
+    if (rAuthor.roles.has(gRoleSkyStrike.id)) rAuthor.removeRole(gRoleSkyStrike.id);
+    if (rAuthor.roles.has(gRoleDoubleStab.id)) rAuthor.removeRole(gRoleDoubleStab.id);
+    if (rAuthor.roles.has(gRoleCircleSwing.id)) rAuthor.removeRole(gRoleCircleSwing.id);
+    if (rAuthor.roles.has(gRoleDragonTooth.id)) rAuthor.removeRole(gRoleDragonTooth.id);
+    if (rAuthor.roles.has(gRoleDraconicCrusher.id)) rAuthor.removeRole(gRoleDraconicCrusher.id);
+    if (rAuthor.roles.has(gRoleFallingFlowerPalm.id)) rAuthor.removeRole(gRoleFallingFlowerPalm.id);
+    if (rAuthor.roles.has(gRoleDragonBreaksTheRank.id)) rAuthor.removeRole(gRoleDragonBreaksTheRank.id);
+    if (rAuthor.roles.has(gRoleRisingDragonSoarsTheSky.id)) rAuthor.removeRole(gRoleRisingDragonSoarsTheSky.id);
+    if (rAuthor.roles.has(gRoleFuriousDragonStrikesTheHeart.id)) rAuthor.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
+
+    //remove player 2 excess roles
+    if (rUser.roles.has(gRoleSkyStrike.id)) rUser.removeRole(gRoleSkyStrike.id);
+    if (rUser.roles.has(gRoleDoubleStab.id)) rUser.removeRole(gRoleDoubleStab.id);
+    if (rUser.roles.has(gRoleCircleSwing.id)) rUser.removeRole(gRoleCircleSwing.id);
+    if (rUser.roles.has(gRoleDragonTooth.id)) rUser.removeRole(gRoleDragonTooth.id);
+    if (rUser.roles.has(gRoleDraconicCrusher.id)) rUser.removeRole(gRoleDraconicCrusher.id);
+    if (rUser.roles.has(gRoleFallingFlowerPalm.id)) rUser.removeRole(gRoleFallingFlowerPalm.id);
+    if (rUser.roles.has(gRoleDragonBreaksTheRank.id)) rUser.removeRole(gRoleDragonBreaksTheRank.id);
+    if (rUser.roles.has(gRoleRisingDragonSoarsTheSky.id)) rUser.removeRole(gRoleRisingDragonSoarsTheSky.id);
+    if (rUser.roles.has(gRoleFuriousDragonStrikesTheHeart.id)) rUser.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
+    //---End of remove excess roles---
+
   }
 
-  // if(cmd === `${prefix}wallofshame`){
-  //   let endEmbed = new Discord.RichEmbed()
-  //   .setDescription("leaderboard")
-  //   .setColor("#15f153")
-  //   .addField("No.1 - Cel for no reason.")
-  //   .addField("No.2 - Neopolitan (0%) damage dealt.")
-  //   .addField("No.3 - Neopolitan (6%) damage dealt.")
-  //
-  //   //message.channel.send(endEmbed);
-  //    message.channel.send(endEmbed);
-  //   //return message.channel.send(`(█    █    █    █    )`); 4 empty space equals 1 white space?
-  // }
+  if(cmd === `${prefix}wallofshame`){
+    let endEmbed = new Discord.RichEmbed()
+    .setDescription("Wall of Shame")
+    .setColor("#15f153")
+    .addField("No.1 - Cel for no reason.")
+    .addField("No.2 - Neopolitan (0%) damage dealt.")
+    .addField("No.3 - Neopolitan (6%) damage dealt.")
+    .addField("No.4 - Aegis (6%) damage dealt.")
+
+    //message.channel.send(endEmbed);
+     message.channel.send(endEmbed);
+    //return message.channel.send(`(█    █    █    █    )`); 4 empty space equals 1 white space?
+  }
+
+  if(cmd === `${prefix}badnames`){
+    let endEmbed = new Discord.RichEmbed()
+    .setDescription("Bad names leaderboard:")
+    .setColor("#15f153")
+    .addField("No.1","Red Bean Revenge")
+    .addField("No.2","Bubble Tea Brotherhood")
+    .addField("No.2","Egg Tart Ecstasy")
+    //message.channel.send(endEmbed);
+     message.channel.send(endEmbed);
+    //return message.channel.send(`(█    █    █    █    )`); 4 empty space equals 1 white space?
+  }
 
 });
 
