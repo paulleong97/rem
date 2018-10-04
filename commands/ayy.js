@@ -2,17 +2,8 @@ const Discord = require("discord.js");
 
 module.exports.run = async (bot, message, args) => {
   message.delete();
-  // message.channel.send("AYYYYYYY");
-  function calculateElo(a, b){
-    var Ra =1200;
-    var Rb = 1200;
-    var k = 100;
+   message.channel.send("AYYYYYYY");
 
-    var Ea = 1/(1+Math.pow(10,((Rb-Ra)/400)));
-    return Ea;
-  }
-  var a = calculateElo(1200,1200);
-  message.channel.send(`${a}`);
 
   // let playerOneChannel = message.guild.channels.find(`name`, "player-one");
   // let playerTwoChannel = message.guild.channels.find(`name`, "player-two");
