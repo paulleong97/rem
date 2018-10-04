@@ -27,6 +27,8 @@ module.exports.run = async (bot, message, args) => {
     let wins = pkRecord[rAuthor.id].wins;
     let loss = pkRecord[rAuthor.id].loss;
     let elo = pkRecord[rAuthor.id].elo;
+    // let totalWinElo = pkRecord[rAuthor.id].totalWinElo;
+    // let totalLoseElo = pkRecord[rAuthor.id].totalLoseElo;
     //let total = pkRecord[rAuthor.id].total;
 
     // if(rUser){ //if got mention user
@@ -37,7 +39,7 @@ module.exports.run = async (bot, message, args) => {
 
     let pkEmbed = new Discord.RichEmbed()
     .setColor("#15f153")
-    .addField("Your PK Record: ", `[${wins}W, ${loss}L] Elo: ${elo}`, true)
+    .addField("Your PK Record: ", `[${wins}W, ${loss}L] Elo: ${elo} `, true)
     message.channel.send(pkEmbed);
 
     //IF HAVE ERROR DELETE THIS BLOCK
