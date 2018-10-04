@@ -55,10 +55,9 @@ fs.readdir("./commands/", (err,files) =>{
 //When bot is turn online
 bot.on("ready", async () => {
   console.log(`${bot.user.username} is online`);
-  bot.user.setActivity("Flirting w/ pol", {type: "PLAYING"});
+  bot.user.setActivity("pol is out tonight.", {type: "PLAYING"});
   //bot.user.setActivity("Flirting w/pol");
 });
-
 bot.on("guildMemberAdd", async member => {
   console.log(`${member} joined the server`);
   let logChannel = member.guild.channels.find(`name`, "log-channel");
@@ -66,13 +65,11 @@ bot.on("guildMemberAdd", async member => {
       logChannel.send(`New member ${member} joined. Gave the ${gamerRole} role`);
       member.addRole(gamerRole.id);
 });
-
 bot.on("guildMemberRemove", async member => {
     console.log(`${member} left the server`);
     let logChannel = member.guild.channels.find(`name`, "log-channel");
   logChannel.send(`${member} left this server`);
 });
-
 bot.on("channelCreate", async channel => {
   let logChannel = channel.guild.channels.find(`name`, "log-channel");
   logChannel.send(`Someone created the ${channel} channel`);
@@ -91,6 +88,7 @@ bot.on("message", async message => {
   let commandfile = bot.commands.get(cmd.slice(prefix.length));
   if (commandfile) commandfile.run(bot, message, args);
 
+  //**START OF SPAM-BASED COMMAND**//
   //use skill command
   if(cmd === `${prefix}l`){
 
@@ -655,7 +653,6 @@ bot.on("message", async message => {
     //else message.channel.send("you don't have these roles pls don't interrupt");
     else message.delete().catch(O_o=>{});
   }
-
   if(cmd === `${prefix}pk`){
     let pkRecord = JSON.parse(fs.readFileSync("./pkrecord.json", "utf8"));
       let time = "30000"; //30000
@@ -933,33 +930,7 @@ bot.on("message", async message => {
     //---End of remove excess roles---
 
   }
-
-  if(cmd === `${prefix}wallofshame`){
-    let endEmbed = new Discord.RichEmbed()
-    .setDescription("Wall of Shame")
-    .setColor("#15f153")
-    .addField("No.1 - Cel for no reason.")
-    .addField("No.2 - Neopolitan (0%) damage dealt.")
-    .addField("No.3 - Neopolitan (6%) damage dealt.")
-    .addField("No.4 - Aegis (6%) damage dealt.")
-
-    //message.channel.send(endEmbed);
-     message.channel.send(endEmbed);
-    //return message.channel.send(`(█    █    █    █    )`); 4 empty space equals 1 white space?
-  }
-
-  if(cmd === `${prefix}badnames`){
-    let endEmbed = new Discord.RichEmbed()
-    .setDescription("Bad names leaderboard:")
-    .setColor("#15f153")
-    .addField("No.1","Red Bean Revenge")
-    .addField("No.2","Bubble Tea Brotherhood")
-    .addField("No.2","Egg Tart Ecstasy")
-    //message.channel.send(endEmbed);
-     message.channel.send(endEmbed);
-    //return message.channel.send(`(█    █    █    █    )`); 4 empty space equals 1 white space?
-  }
-
+  //**END OF SPAM-BASED COMMAND**//
 });
 
 bot.login(tokenfile.token);
