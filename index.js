@@ -61,7 +61,7 @@ fs.readdir("./commands/", (err,files) =>{
 //When bot is turn online
 bot.on("ready", async () => {
   console.log(`${bot.user.username} is online`);
-  bot.user.setActivity("Fighting for bot's rights", {type: "PLAYING"});
+  bot.user.setActivity("Re:Zero Alternate Ending", {type: "WATCHING"});
   //bot.user.setActivity("Flirting w/pol");
 });
 bot.on("guildMemberAdd", async member => {
@@ -1446,8 +1446,8 @@ bot.on("message", async message => {
   }
   if(cmd === `${prefix}pk`){
     let pkRecord = JSON.parse(fs.readFileSync("./pkrecord.json", "utf8"));
-      let time = "3000"; //30000
-      let pktime = "30000" //60000
+      let time = "30000"; //30000
+      let pktime = "60000" //60000
       playerOnehp = 1000;
       playerTwohp = 1000;
       playerOneLastUsedSkill="Standing still...";
@@ -1494,6 +1494,29 @@ bot.on("message", async message => {
     if(!gRole2) return message.reply("Couldn't find that role.");
     if(rUser.roles.has(gRole2.id)) return message.reply("They already have that role.");
     await(rUser.addRole(gRole2.id));
+
+    //remove player1 excess roles
+    if (rAuthor.roles.has(gRoleSkyStrike.id)) rAuthor.removeRole(gRoleSkyStrike.id);
+    if (rAuthor.roles.has(gRoleDoubleStab.id)) rAuthor.removeRole(gRoleDoubleStab.id);
+    if (rAuthor.roles.has(gRoleCircleSwing.id)) rAuthor.removeRole(gRoleCircleSwing.id);
+    if (rAuthor.roles.has(gRoleDragonTooth.id)) rAuthor.removeRole(gRoleDragonTooth.id);
+    if (rAuthor.roles.has(gRoleDraconicCrusher.id)) rAuthor.removeRole(gRoleDraconicCrusher.id);
+    if (rAuthor.roles.has(gRoleFallingFlowerPalm.id)) rAuthor.removeRole(gRoleFallingFlowerPalm.id);
+    if (rAuthor.roles.has(gRoleDragonBreaksTheRank.id)) rAuthor.removeRole(gRoleDragonBreaksTheRank.id);
+    if (rAuthor.roles.has(gRoleRisingDragonSoarsTheSky.id)) rAuthor.removeRole(gRoleRisingDragonSoarsTheSky.id);
+    if (rAuthor.roles.has(gRoleFuriousDragonStrikesTheHeart.id)) rAuthor.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
+
+    //remove player 2 excess roles
+    if (rUser.roles.has(gRoleSkyStrike.id)) rUser.removeRole(gRoleSkyStrike.id);
+    if (rUser.roles.has(gRoleDoubleStab.id)) rUser.removeRole(gRoleDoubleStab.id);
+    if (rUser.roles.has(gRoleCircleSwing.id)) rUser.removeRole(gRoleCircleSwing.id);
+    if (rUser.roles.has(gRoleDragonTooth.id)) rUser.removeRole(gRoleDragonTooth.id);
+    if (rUser.roles.has(gRoleDraconicCrusher.id)) rUser.removeRole(gRoleDraconicCrusher.id);
+    if (rUser.roles.has(gRoleFallingFlowerPalm.id)) rUser.removeRole(gRoleFallingFlowerPalm.id);
+    if (rUser.roles.has(gRoleDragonBreaksTheRank.id)) rUser.removeRole(gRoleDragonBreaksTheRank.id);
+    if (rUser.roles.has(gRoleRisingDragonSoarsTheSky.id)) rUser.removeRole(gRoleRisingDragonSoarsTheSky.id);
+    if (rUser.roles.has(gRoleFuriousDragonStrikesTheHeart.id)) rUser.removeRole(gRoleFuriousDragonStrikesTheHeart.id);
+    //---End of remove excess roles---
 
     //create winloss record if author/user do not have an existing entry in pkrecord.json
     if(!pkRecord[rAuthor.id]) pkRecord[rAuthor.id] = {
@@ -1758,7 +1781,7 @@ bot.on("message", async message => {
   //**END OF SPAM-BASED COMMAND**//
 
   if(cmd === `${prefix}turnbased`){
-    let muterole = message.guild.roles.find(`name`, "muted");
+    let muterole = message.guild.roles.find(`name`, "muted"); //to be used to implement mute later
     let rAuthor = message.guild.member(message.author);
 
     let gRole1 = message.guild.roles.find(`name`, "PlayerOne");
@@ -1774,31 +1797,45 @@ bot.on("message", async message => {
       playerOneUsedSkill = true;
       if(playerOneUsedSkill === true && playerTwoUsedSkill === true){
         message.channel.send("Detected both players used skill. Next Round.")
+        //***calculate and display damage/cc/cd here***
+
+        //***end of calculate and display damage/cc/cd***
         playerOneUsedSkill = false;
         playerTwoUsedSKill = false;
+        //***unmute player 1 and player 2 here***
+
+        //***end of unmute player 1 and player 2 here***
       }
       else{
          message.channel.send("Player 1 used skill, awaiting player 2.")
-        //message.channel.send(`p1 ${playerOneUsedSkill}`);
+        //mute player 1 here so that can't use more than 1 skill per round
       }
     }
 
     else if(rAuthor.roles.has(gRole2.id)){
       message.channel.send("Player 2 striked.");
-        //message.channel.send(`p2 ${playerTwoUsedSkill}`);
+        //mute player 2 here
       playerTwoUsedSkill = true;
       if((playerOneUsedSkill === true && playerTwoUsedSkill === true)){
+        //***calculate and display damage/cc/cd here***
+
+        //***end of calculate and display damage/cc/cd***
         message.channel.send("Detected both players used skill. Next Round.")
         playerOneUsedSkill = false;
         playerTwoUsedSKill = false;
+        //***unmute player 1 and player 2 here***
+
+        //***end of unmute player 1 and player 2 here***
       }
       else {
         message.channel.send("Player 2 used skill, awaiting player 1.")
-          //message.channel.send(`p2 ${playerTwoUsedSkill}`);
+          //mute player 2 here so that can't use more than 1 skill per round
       }
     }
 
   }
+
+
 });
 
 bot.login(tokenfile.token);
