@@ -20,6 +20,17 @@ var dragonBreaksTheRanks = 35;
 var furiousDragonStrikesTheHeart = 40;
 var risingDragonSoarsTheSky = 50;
 
+//can be used to store skill CD in turn-basad
+var skyStrikeCD = 0;
+var dragonToothCD = 0;
+var doubleStabCD = 0;
+var circleSwingCD = 0;
+var draconicCrusherCD = 0;
+var fallingFlowerPalmCD = 0;
+var dragonBreaksTheRanksCD = 0;
+var furiousDragonStrikesTheHeartCD = 0;
+var risingDragonSoarsTheSkyCD = 0;
+
 var rAuthor;  //person who sends a message
 var rUser;  //the person who is pinged
 
