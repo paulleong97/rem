@@ -4,11 +4,18 @@ module.exports.run = async (bot, message, args) => {
   var ftCD = 2; //example of current skill cooldown
   var trCD = 3;
 
+  const ayy = message.guild.emojis.find("name", "SkyStrike");
+  const ayy2 = message.guild.emojis.find("name", "DragonTooth");
+  const ayy3 = message.guild.emojis.find("name", "FallingFlowerPalm");
+  const ayy4 = message.guild.emojis.find("name", "CircleSwing");
+  const ayy5 = message.guild.emojis.find("name", "DoubleStab");
+
+
   //We can add reaction to Message but we cannot add reaction to RichEmbed.
   //I checked the Discord.js RichEmbed api documentation but seems like there's no such function.
-  message.react("💩"); //check the ;reaction message to see how this works.
-  message.react("👍");
-  message.react("💩"); //also we can only add 1 speciic reaction 1 time. Trying to increase the number doesn't work.
+  // message.react("💩"); //check the ;reaction message to see how this works.
+  // message.react("👍");
+//  message.channel.send(`${ayy}`); //also we can only add 1 speciic reaction 1 time. Trying to increase the number doesn't work.
 
   //example of an embed we display
   let endEmbed = new Discord.RichEmbed()
@@ -16,8 +23,9 @@ module.exports.run = async (bot, message, args) => {
   .setColor("#15f153")
   .addField("Player 1 hp",`〘 ████████  〙 73% hp left`, true)
   .addField("Player 2 hp",`〘 ██████  〙 55% hp left`, true)
-  .addField("Skill Cooldown",`:wink: ${ftCD} 👍 ${trCD}`) //this can be used to emulate the effect of multiple reactions
-   message.channel.send(endEmbed);
+  .addField("Level 1 Cooldown",`${ayy}${trCD} ${ayy2}${ftCD} ${ayy3}${ftCD} ${ayy4}${trCD} ${ayy5}${ftCD}`) //this can be used to emulate the effect of multiple reactions
+  .addField("Level 2 Cooldown",`${ayy}${trCD} ${ayy2}${ftCD} ${ayy3}${ftCD} `)
+  message.channel.send(endEmbed);
 
 }
   module.exports.help = {
