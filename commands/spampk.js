@@ -1,4 +1,7 @@
 const Discord = require("discord.js");
+const fs = require("fs");
+const ms = require("ms");
+let pkRecord = JSON.parse(fs.readFileSync("./pkrecord.json", "utf8"));
 
 //skill name and damage
 var slash = 2;

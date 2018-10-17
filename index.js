@@ -4,7 +4,6 @@ const Discord = require("discord.js");
 const bot = new Discord.Client({disableEveryone: true});
 const fs = require("fs");
 const ms = require("ms");
-let pkRecord = JSON.parse(fs.readFileSync("./pkrecord.json", "utf8"));
 
 bot.commands = new Discord.Collection();
 fs.readdir("./commands/", (err,files) =>{
