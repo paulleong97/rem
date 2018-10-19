@@ -1,6 +1,10 @@
 const Discord = require("discord.js");
 
 module.exports.run = async (bot, message, args) => {
+  let rAuthor = message.guild.member(message.author);
+
+
+  message.channel.send(`rAuthor: ${rAuthor.id}`);
   let endEmbed = new Discord.RichEmbed()
   .setDescription("CSS can be scripted in")
   .setColor("#15f153")

@@ -1,19 +1,17 @@
-
+// Struct Factory
+function makeStruct(names) {
+  var names = names.split(' ');
+  var count = names.length;
+  function constructor() {
+    for (var i = 0; i < count; i++) {
+      this[names[i]] = arguments[i];
+    }
+  }
+  return constructor;
+}
 
 //Stats Class
 class Stats {
-
-  // Struct Factory
-  function makeStruct(names) {
-    var names = names.split(' ');
-    var count = names.length;
-    function constructor() {
-      for (var i = 0; i < count; i++) {
-        this[names[i]] = arguments[i];
-      }
-    }
-    return constructor;
-  }
 	//Initalize Level and Quest Stat Points
 	initializeUnitStats(){
 		this.level = 70

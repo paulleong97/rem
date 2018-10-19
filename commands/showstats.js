@@ -136,5 +136,5 @@ class Stats {
 }
 
   module.exports.help = {
-    name: "ayy"
+    name: "showstats"
   }
