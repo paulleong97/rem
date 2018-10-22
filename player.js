@@ -55,6 +55,9 @@ var BattleMageSkillLevels = makeStruct("skyStrikeLevel dragonToothLevel doubleSt
 // Battle Mage Cooldown Struct
 var BattleMageCooldowns = makeStruct("skyStrikeCooldown dragonToothCooldown doubleStabCooldown fallingFlowerPalmCooldown circleSwingCooldown")
 
+// Base Damage Scaling
+var baseDamageScaling = new DamageScaling(1,1)
+
 // Empty Buffs
 var emptyAttributesBuff = new AttributeStats(0,0,0,0)
 var emptyResourceBuff = new ResourceStats(0,0,0)
@@ -147,6 +150,11 @@ var risingDragonSoarsTheSkyPerLevelDamageScaling = new DamageScaling(1,1)
 
 //Stats Class
 var Player = class {
+	// Set PlayerID
+	setID(id){
+		this.ID = id
+	}
+
 	// Sets Class
 	setClass(className){
 		this.className = className
@@ -305,11 +313,11 @@ var Player = class {
 
 	
 	// Calculates the Base Stats that have no buffs
-	calculateBaseStats(){
+	calculateBaseStats(id){
+		this.setID(id)
 		this.setClass("Battle Mage")
 		this.setBattleMageSkillLevels(10,10,10,10,10)
 		this.initializeBattleMageSkillCooldowns()
-		this.activeSkill = this.calculateSkillValues("Stab")
 		this.initializeUnitStats()
 		this.initializeClassScalingStats()
 		this.initializeArmorStats(30,100,100,100,100,100)
@@ -319,16 +327,34 @@ var Player = class {
 		this.fillResourceStats(this.baseMaxResourceStats)
 		this.baseDefenseStats = this.calculateDefenseStats(this.baseAttributeStats)
 		this.baseResistanceStats = this.calculateResistanceStats(70, this.baseDefenseStats)
-		this.baseAttackStats = this.calculateAttackStats(this.activeSkill.damageScaling, this.baseAttributeStats)
+		this.baseAttackStats = this.calculateAttackStats(baseDamageScaling, this.baseAttributeStats)
+	}
+
+	setBaseStats(player){
+		this.ID = player.ID
+		this.className = player.className
+		this.skillLevels = player.skillLevels
+		this.skillCooldowns = player.skillCooldowns
+		this.unitStats = player.unitStats
+		this.classScalingStats = player.classScalingStats
+		this.armorStats = player.armorStats
+		this.weaponStats = player.weaponStats
+		this.baseAttributeStats = player.baseAttributeStats
+		this.baseMaxResourceStats = player.baseMaxResourceStats
+		this.fillResourceStats(this.baseMaxResourceStats)
+		this.baseDefenseStats = player.baseDefenseStats
+		this.baseResistanceStats = player.baseResistanceStats
+		this.baseAttackStats = player.baseAttackStats
 	}
 
 	// Reset Effective Stats
-	resetEffectiveStats(){
+	resetEffectiveStats(skillName){
+		this.activeSkill = this.calculateSkillValues(skillName)
 		this.effectiveAttributeStats = new AttributeStats(this.baseAttributeStats.strength, this.baseAttributeStats.intelligence, this.baseAttributeStats.vitality, this.baseAttributeStats.spirit)
 		this.effectiveMaxResourceStats = new ResourceStats(this.baseMaxResourceStats.HP, this.baseMaxResourceStats.MP, this.baseMaxResourceStats.Stamina)
 		this.effectiveDefenseStats = new DefenseStats(this.baseDefenseStats.physicalDefense, this.baseDefenseStats.magicDefense)
 		this.effectiveResistanceStats = new ResistanceStats(this.baseResistanceStats.physicalDamageReduction, this.baseResistanceStats.magicDamageReduction)
-		this.effectiveAttackStats = new AttackStats(this.baseAttackStats.physicalAttack, this.baseAttackStats.magicAttack)
+		this.effectiveAttackStats = this.calculateAttackStats(this.activeSkill.damageScaling, this.baseAttributeStats)
 	}
 	
 	// Clears or Initializes the array of buffs
@@ -480,15 +506,29 @@ var Player = class {
 }
 
 module.exports.Game = class {
-	initializeMatch(){
+	// Initialize Challenger Player
+	initializeChallengerPlayer(challengerID){
 		this.challengerPlayer = new Player()
+		this.challengerPlayer.calculateBaseStats(challengerID)
+		this.challengerPlayer.resetEffectiveStats("Stab")
+	}
+	// Set Challenger Player
+	setChallengerPlayer(challengerPlayer){
+		this.challengerPlayer = new Player()
+		this.challengerPlayer.setBaseStats(challengerPlayer)
+		this.challengerPlayer.resetEffectiveStats("Stab")
+	}
+	// Initialize Challenged Player
+	initializeChallengedPlayer(challengedID){
 		this.challengedPlayer = new Player()
-
-		this.challengerPlayer.calculateBaseStats()
-		this.challengerPlayer.resetEffectiveStats()
-
-		this.challengedPlayer.calculateBaseStats()
-		this.challengedPlayer.resetEffectiveStats()
+		this.challengedPlayer.calculateBaseStats(challengedID)
+		this.challengedPlayer.resetEffectiveStats("Stab")
+	}
+	// Set Challenged Player
+	setChallengedPlayer(challengedPlayer){
+		this.challengedPlayer = new Player()
+		this.challengedPlayer.setBaseStats(challengedPlayer)
+		this.challengedPlayer.resetEffectiveStats("Stab")
 	}
 
 	printTurnStatus(){
