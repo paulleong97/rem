@@ -152,7 +152,12 @@ var risingDragonSoarsTheSkyPerLevelDamageScaling = new DamageScaling(1,1)
 var Player = class {
 	// Set PlayerID
 	setID(id){
-		this.ID = id
+		this.ID = id;
+	}
+
+	// Set PlayerUsername
+	setUsername(username){
+		this.username = username;
 	}
 
 	// Sets Class
@@ -304,17 +309,23 @@ var Player = class {
 	}
 
 	// Calculated the Damage that you would do TODO: target needs to be another instance of Stats
-	calculateDamage(target, attackStats){
-		var physicalDamage = attackStats.physicalAttack * (1-target.effectiveResistanceStats.physicalDamageReduction)
-		var magicDamage = attackStats.magicAttack * (1-target.effectiveResistanceStats.magicDamageReduction)
+	calculateDamage(resistanceStats, attackStats){
+		var physicalDamage = attackStats.physicalAttack * (1-resistanceStats.physicalDamageReduction)
+		var magicDamage = attackStats.magicAttack * (1-resistanceStats.magicDamageReduction)
 		var damageStats = new DamageStats(physicalDamage, magicDamage)
 		return damageStats
 	}
 
+	//Deals damage to target TODO: target needs to a be another instance of Stats
+	dealDamage(target, damageStats){
+		target.currentResources.HP = target.currentResources.HP - (damageStats.physicalDamage + damageStats.magicDamage)
+	}
+
 	
 	// Calculates the Base Stats that have no buffs
-	calculateBaseStats(id){
+	calculateBaseStats(id,username){
 		this.setID(id)
+		this.setUsername(username)
 		this.setClass("Battle Mage")
 		this.setBattleMageSkillLevels(10,10,10,10,10)
 		this.initializeBattleMageSkillCooldowns()
@@ -332,6 +343,7 @@ var Player = class {
 
 	setBaseStats(player){
 		this.ID = player.ID
+		this.username = player.username
 		this.className = player.className
 		this.skillLevels = player.skillLevels
 		this.skillCooldowns = player.skillCooldowns
@@ -467,11 +479,6 @@ var Player = class {
 		this.activeBuffs.push(incomingBuff)
 	}
 
-	//Deals damage to target TODO: target needs to a be another instance of Stats
-	dealDamage(target){
-		target.resourceStats.HP = target.resourceStats.HP - (this.damageStats.physicalDamage + this.damageStats.magicDamage)
-	}
-
 	// DEBUG: Prints Base Stats
 	printBaseStats(){
 		console.log(this.className)
@@ -507,130 +514,76 @@ var Player = class {
 
 module.exports.Game = class {
 	// Initialize Challenger Player
-	initializeChallengerPlayer(challengerID){
-		this.challengerPlayer = new Player()
-		this.challengerPlayer.calculateBaseStats(challengerID)
-		this.challengerPlayer.resetEffectiveStats("Stab")
+	initializeChallengerPlayer(challengerID, challengerUsername){
+		this.challengerPlayer = new Player();
+		this.challengerPlayer.calculateBaseStats(challengerID, challengerUsername);
+		this.challengerPlayer.resetEffectiveStats("Stab");
 	}
 	// Set Challenger Player
 	setChallengerPlayer(challengerPlayer){
-		this.challengerPlayer = new Player()
-		this.challengerPlayer.setBaseStats(challengerPlayer)
-		this.challengerPlayer.resetEffectiveStats("Stab")
+		this.challengerPlayer = new Player();
+		this.challengerPlayer.setBaseStats(challengerPlayer);
+		this.challengerPlayer.resetEffectiveStats("Stab");
 	}
 	// Initialize Challenged Player
-	initializeChallengedPlayer(challengedID){
-		this.challengedPlayer = new Player()
-		this.challengedPlayer.calculateBaseStats(challengedID)
-		this.challengedPlayer.resetEffectiveStats("Stab")
+	initializeChallengedPlayer(challengedID, challengedUsername){
+		this.challengedPlayer = new Player();
+		this.challengedPlayer.calculateBaseStats(challengedID, challengedUsername);
+		this.challengedPlayer.resetEffectiveStats("Stab");
 	}
 	// Set Challenged Player
 	setChallengedPlayer(challengedPlayer){
-		this.challengedPlayer = new Player()
-		this.challengedPlayer.setBaseStats(challengedPlayer)
-		this.challengedPlayer.resetEffectiveStats("Stab")
+		this.challengedPlayer = new Player();
+		this.challengedPlayer.setBaseStats(challengedPlayer);
+		this.challengedPlayer.resetEffectiveStats("Stab");
 	}
 
-	printTurnStatus(){
-		const Discord = require("discord.js")
-
-		module.exports.help = {
-			name: "turnStatus"
-		}
-
-		module.exports.run = async (bot, message, args) => {
-			const skyStrikeIcon = message.guild.emojis.find("name", "SkyStrike")
-			const dragonToothIcon = message.guild.emojis.find("name", "DragonTooth")
-			const fallingFlowerPalmIcon = message.guild.emojis.find("name", "FallingFlowerPalm")
-			const circleSwingIcon = message.guild.emojis.find("name", "CircleSwing")
-			const doubleStabIcon = message.guild.emojis.find("name", "DoubleStab")
-			const neutralChaserIcon = message.guild.emojis.find("name", "NeutralChaser")
-			const iceChaserIcon = message.guild.emojis.find("name", "WaterChaser")
-			const fireChaserIcon = message.guild.emojis.find("name", "FireChaser")
-			const shadowChaserIcon = message.guild.emojis.find("name", "ShadowChaser")
-			const lightChaserIcon = message.guild.emojis.find("name", "LightChaser")
-
-			//Challenger Embed
-			let challengerEmbed = new Discord.RichEmbed()
-			.setTitle("Challenger Stats")
-			.setColor("#15f153")
-			.addField("Resources", `Max HP: ${this.challengerPlayer.effectiveMaxResourceStats.HP.toFixed(0)} \n Max MP: ${this.challengerPlayer.effectiveMaxResourceStats.MP.toFixed(0)} \n Max Stamina: ${this.challengerPlayer.effectiveMaxResourceStats.Stamina.toFixed(0)}`)
-			.addField("Attributes", `Strength: ${this.challengerPlayer.effectiveAttributeStats.strength.toFixed(0)} \n Intelligence: ${this.challengerPlayer.effectiveAttributeStats.intelligence.toFixed(0)} \n Vitality: ${this.challengerPlayer.effectiveAttributeStats.vitality.toFixed(0)} \n Spirit: ${this.challengerPlayer.effectiveAttributeStats.spirit.toFixed(0)}`)
-			.addField("Attack", `Physical: ${this.challengerPlayer.effectiveAttackStats.physicalAttack.toFixed(0)} \n Magic: ${this.challengerPlayer.effectiveAttackStats.magicAttack.toFixed(0)}`, true)
-			.addField("Defense", `Physical: ${this.challengerPlayer.effectiveDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${this.challengerPlayer.effectiveDefenseStats.magicDefense.toFixed(0)}`, true)
-			.addField("Resistance", `Physical: ${(this.challengerPlayer.effectiveResistanceStats.physicalDamageReduction*100).toFixed(2)}% \n Magic: ${(this.challengerPlayer.effectiveResistanceStats.magicDamageReduction*100).toFixed(2)}%`, true)
-			.addField("Weapon", `Physical Damage: ${this.challengerPlayer.weaponStats.physicalWeaponDamage.toFixed(0)} \n Magic Damage: ${this.challengerPlayer.weaponStats.magicWeaponDamage.toFixed(0)} \n Strength Bonus: ${this.challengerPlayer.weaponStats.strengthWeaponBonus.toFixed(0)} \n Intelligence Bonus: ${this.challengerPlayer.weaponStats.intelligenceWeaponBonus.toFixed(0)} \n Vitality Bonus: ${this.challengerPlayer.weaponStats.vitalityWeaponBonus.toFixed(0)} \n Spirit Bonus: ${this.challengerPlayer.weaponStats.spiritWeaponBonus.toFixed(0)}`, true)
-			.addField("Armor", `Physical Armor: ${this.challengerPlayer.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${this.challengerPlayer.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${this.challengerPlayer.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${this.challengerPlayer.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${this.challengerPlayer.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${this.challengerPlayer.armorStats.spiritArmorBonus.toFixed(0)}`, true)
-
-
-			.addField("Skill Cooldowns",`${skyStrikeIcon}${this.challengerPlayer.skillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${this.challengerPlayer.skillCooldowns.dragonToothCooldown} ${doubleStabIcon}${this.challengerPlayer.skillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${this.challengerPlayer.skillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${this.challengerPlayer.skillCooldowns.circleSwingCooldown}`) //this can be used to emulate the effect of multiple reactions
-			.addField("Active Chasers",`${lightChaserIcon}${this.challengerPlayer.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${this.challengerPlayer.skillLevels.dragonToothLevel} ${iceChaserIcon}${this.challengerPlayer.skillLevels.doubleStabLevel} ${fireChaserIcon}${this.challengerPlayer.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${this.challengerPlayer.skillLevels.circleSwingLevel}`)
-			message.channel.send(challengerEmbed)
-
-			//Challenged Embed
-			let challengedEmbed = new Discord.RichEmbed()
-			.setTitle("Challenged Stats")
-			.setColor("#15f153")
-			.addField("Resources", `Max HP: ${this.challengedPlayer.effectiveMaxResourceStats.HP.toFixed(0)} \n Max MP: ${this.challengedPlayer.effectiveMaxResourceStats.MP.toFixed(0)} \n Max Stamina: ${this.challengedPlayer.effectiveMaxResourceStats.Stamina.toFixed(0)}`)
-			.addField("Attributes", `Strength: ${this.challengedPlayer.effectiveAttributeStats.strength.toFixed(0)} \n Intelligence: ${this.challengedPlayer.effectiveAttributeStats.intelligence.toFixed(0)} \n Vitality: ${this.challengedPlayer.effectiveAttributeStats.vitality.toFixed(0)} \n Spirit: ${this.challengedPlayer.effectiveAttributeStats.spirit.toFixed(0)}`)
-			.addField("Attack", `Physical: ${this.challengedPlayer.effectiveAttackStats.physicalAttack.toFixed(0)} \n Magic: ${this.challengedPlayer.effectiveAttackStats.magicAttack.toFixed(0)}`, true)
-			.addField("Defense", `Physical: ${this.challengedPlayer.effectiveDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${this.challengedPlayer.effectiveDefenseStats.magicDefense.toFixed(0)}`, true)
-			.addField("Resistance", `Physical: ${(this.challengedPlayer.effectiveResistanceStats.physicalDamageReduction*100).toFixed(2)}% \n Magic: ${(this.challengedPlayer.effectiveResistanceStats.magicDamageReduction*100).toFixed(2)}%`, true)
-			.addField("Weapon", `Physical Damage: ${this.challengedPlayer.weaponStats.physicalWeaponDamage.toFixed(0)} \n Magic Damage: ${this.challengedPlayer.weaponStats.magicWeaponDamage.toFixed(0)} \n Strength Bonus: ${this.challengedPlayer.weaponStats.strengthWeaponBonus.toFixed(0)} \n Intelligence Bonus: ${this.challengedPlayer.weaponStats.intelligenceWeaponBonus.toFixed(0)} \n Vitality Bonus: ${this.challengedPlayer.weaponStats.vitalityWeaponBonus.toFixed(0)} \n Spirit Bonus: ${this.challengedPlayer.weaponStats.spiritWeaponBonus.toFixed(0)}`, true)
-			.addField("Armor", `Physical Armor: ${this.challengedPlayer.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${this.challengedPlayer.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${this.challengedPlayer.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${this.challengedPlayer.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${this.challengedPlayer.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${this.challengedPlayer.armorStats.spiritArmorBonus.toFixed(0)}`, true)
-
-
-			.addField("Skill Cooldowns",`${skyStrikeIcon}${this.challengedPlayer.skillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${this.challengedPlayer.skillCooldowns.dragonToothCooldown} ${doubleStabIcon}${this.challengedPlayer.skillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${this.challengedPlayer.skillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${this.challengedPlayer.skillCooldowns.circleSwingCooldown}`) //this can be used to emulate the effect of multiple reactions
-			.addField("Active Chasers",`${lightChaserIcon}${this.challengedPlayer.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${this.challengedPlayer.skillLevels.dragonToothLevel} ${iceChaserIcon}${this.challengedPlayer.skillLevels.doubleStabLevel} ${fireChaserIcon}${this.challengedPlayer.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${this.challengedPlayer.skillLevels.circleSwingLevel}`)
-			return message.channel.send(challengedEmbed)
-
-
-		}
-		
+	// Set Game State {"No Match", "Pending Challenge", "Active Match"}
+	setGameState(gameState){
+		this.gameState = gameState;
 	}
 
-	printStats(){
-		
-		var player1Stats = new Player()
-		player1Stats.calculateBaseStats()
-		player1Stats.resetEffectiveStats()
-		
-		const Discord = require("discord.js")
+	// Set Game State to "Pending Challenge"
+	challengeOpponent(){
+		this.gameState = "Pending Challenge";
+	}
 
-		module.exports.help = {
-			name: "stats"
-		}
+	// Set Game State to "Active Match"
+	challengeAccepted(){
+		this.gameState = "Active Match";
+	}
+	// Initialize Values for the first turn
+	initializeMatch(){
+		this.turn = 1;
+		this.challengerActiveSkill = undefined;
+		this.challengedActiveSkill = undefined;
+	}
 
-		module.exports.run = async (bot, message, args) => {
-			const skyStrikeIcon = message.guild.emojis.find("name", "SkyStrike")
-			const dragonToothIcon = message.guild.emojis.find("name", "DragonTooth")
-			const fallingFlowerPalmIcon = message.guild.emojis.find("name", "FallingFlowerPalm")
-			const circleSwingIcon = message.guild.emojis.find("name", "CircleSwing")
-			const doubleStabIcon = message.guild.emojis.find("name", "DoubleStab")
-			const neutralChaserIcon = message.guild.emojis.find("name", "NeutralChaser")
-			const iceChaserIcon = message.guild.emojis.find("name", "WaterChaser")
-			const fireChaserIcon = message.guild.emojis.find("name", "FireChaser")
-			const shadowChaserIcon = message.guild.emojis.find("name", "ShadowChaser")
-			const lightChaserIcon = message.guild.emojis.find("name", "LightChaser")
-
-			//example of an embed we display
-			let endEmbed = new Discord.RichEmbed()
-			.setTitle("Stats")
-			.setColor("#15f153")
-			.addField("Resources", `Max HP: ${player1Stats.baseMaxResourceStats.HP.toFixed(0)} \n Max MP: ${player1Stats.baseMaxResourceStats.MP.toFixed(0)} \n Max Stamina: ${player1Stats.baseMaxResourceStats.Stamina.toFixed(0)}`)
-			.addField("Attributes", `Strength: ${player1Stats.baseAttributeStats.strength.toFixed(0)} \n Intelligence: ${player1Stats.baseAttributeStats.intelligence.toFixed(0)} \n Vitality: ${player1Stats.baseAttributeStats.vitality.toFixed(0)} \n Spirit: ${player1Stats.baseAttributeStats.spirit.toFixed(0)}`)
-			.addField("Attack", `Physical: ${player1Stats.baseAttackStats.physicalAttack.toFixed(0)} \n Magic: ${player1Stats.baseAttackStats.magicAttack.toFixed(0)}`, true)
-			.addField("Defense", `Physical: ${player1Stats.baseDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${player1Stats.baseDefenseStats.magicDefense.toFixed(0)}`, true)
-			.addField("Resistance", `Physical: ${(player1Stats.baseResistanceStats.physicalDamageReduction*100).toFixed(2)}% \n Magic: ${(player1Stats.baseResistanceStats.magicDamageReduction*100).toFixed(2)}%`, true)
-			.addField("Weapon", `Physical Damage: ${player1Stats.weaponStats.physicalWeaponDamage.toFixed(0)} \n Magic Damage: ${player1Stats.weaponStats.magicWeaponDamage.toFixed(0)} \n Strength Bonus: ${player1Stats.weaponStats.strengthWeaponBonus.toFixed(0)} \n Intelligence Bonus: ${player1Stats.weaponStats.intelligenceWeaponBonus.toFixed(0)} \n Vitality Bonus: ${player1Stats.weaponStats.vitalityWeaponBonus.toFixed(0)} \n Spirit Bonus: ${player1Stats.weaponStats.spiritWeaponBonus.toFixed(0)}`, true)
-			.addField("Armor", `Physical Armor: ${player1Stats.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${player1Stats.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${player1Stats.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${player1Stats.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${player1Stats.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${player1Stats.armorStats.spiritArmorBonus.toFixed(0)}`, true)
-
-
-			.addField("Skill Levels",`${skyStrikeIcon}${player1Stats.skillLevels.skyStrikeLevel} ${dragonToothIcon}${player1Stats.skillLevels.dragonToothLevel} ${doubleStabIcon}${player1Stats.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${player1Stats.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${player1Stats.skillLevels.circleSwingLevel}`) //this can be used to emulate the effect of multiple reactions
-			.addField("Chaser Levels",`${lightChaserIcon}${player1Stats.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${player1Stats.skillLevels.dragonToothLevel} ${iceChaserIcon}${player1Stats.skillLevels.doubleStabLevel} ${fireChaserIcon}${player1Stats.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${player1Stats.skillLevels.circleSwingLevel}`)
-			return message.channel.send(endEmbed)
-
+	// Initial Values for next turn
+	nextTurn(){
+		this.turn++;
+		this.challengerActiveSkill = undefined;
+		this.challengedActiveSkill = undefined;
+	}
+	
+	// Calculate Skill Damages
+	calculateSkillDamage(player,skillname){
+		var skill = calculateSkillValues(skillname);
+		var skillAttackStats = player.calculateAttackStats(skill.damageScaling, player.effectiveAttributeStats);
+		if (player === this.challengerPlayer){
+			this.challengerActiveSkill = skill;
+			var skillDamage = player.calculateDamage(this.challengedPlayer.effectiveResistanceStats, skillAttackStats);
+			player.dealDamage(this.challengedPlayer, skillDamage);
+		} else if (player === this.challengedPlayer){
+			this.challengedActiveSkill = skill;
+			var skillDamage = player.calculateDamage(this.challengerPlayer.effectiveResistanceStats, skillAttackStats);
+			player.dealDamage(this.challengerPlayer, skillDamage);
+		} else {
+			console.log("Error in Damage Calculation")
 		}
 	}
+	
+		
+	
 }
 
