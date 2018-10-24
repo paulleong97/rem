@@ -156,15 +156,101 @@ bot.on("message", async message => {
       turnBased.setChallengedPlayer(challengedPlayer);
     }
     
+    // Prints the number of players in local DB
     console.log(playerStatsDB.length);
 
+    //Print challenge message
+    message.channel.send(`${challenger.user.username} has challenged ${challenged.user.username}`);
+
+    //Set Turn to 1 and clear active Skills
+    turnBased.initializeMatch();
+
+    // Update Player Stats at end of game
     if (newPlayer === true){
       updateJSON();
     }
+
+
   }
+
+
   // Command to accept a pk
   if (command === "accept"){
 
+  }
+
+  // command to get skill input
+  if (command === "skill"){
+    if (args[0] === undefined) return;
+    var skillInput = args[0];
+    var skillUsed = ""
+
+    // Check which skill is used based on key input
+    if (skillInput === 'v') {
+      skillUsed = "Stab";
+    } else if (skillInput === 'C'){
+      skillUsed = "Slash";
+    } else if (skillInput === "r"){
+      skillUsed = "Sky Strike";
+    } else if (skillInput === "e"){
+      skillUsed = "Dragon Tooth";
+    } else if (skillInput === "vv"){
+      skillUsed = "Double Stab";
+    } else if (skillInput === "f"){
+      skillUsed = "Falling Flower Palm";
+    } else if (skillInput === "R"){
+      skillUsed = "Circle Swing";
+    } else if (skillInput === "ER"){
+      skillUsed = "Draconic Crusher";
+    } else if (skillInput === "ft"){
+      skillUsed = "Furious Dragon Strikes The Heart";
+    } else if (skillInput === "tr"){
+      skillUsed = "Dragon Breaks The Ranks";
+    } else if (skillInput === "fr"){
+      skillUsed = "Rising Dragon Soars The Sky";
+    }
+
+    // Find if challenger or challenged is inputting skill and set Active Skill for that player
+    var inputtingMember = message.guild.member(message.author);
+    if (inputtingMember.id === turnBased.challengerPlayer.ID){
+      turnBased.challengerActiveSkill = skillUsed;
+    } else if (inputtingMember.id === turnBased.challengedPlayer.ID){
+      turnBased.challengedActiveSkill = skillUsed;
+    }
+
+    // If there is an active skill for both players, deal damage and go to next turn
+    if((turnBased.challengerActiveSkill !== undefined) && (turnBased.challengedActiveSkill !== undefined)){
+      turnBased.calculateSkillDamage(turnBased.challengerPlayer, turnBased.challengerActiveSkill);
+      turnBased.calculateSkillDamage(turnBased.challengedPlayer, turnBased.challengedActiveSkill);
+      var challengerPercentHP = (turnBased.challengerPlayer.currentResources.HP/turnBased.challengerPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+      var challengerHPBars = "█".repeat((challengerPercentHP/5).toFixed(0));
+      var challengedPercentHP = (turnBased.challengedPlayer.currentResources.HP/turnBased.challengedPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+      var challengedHPBars = "█".repeat((challengedPercentHP/5).toFixed(0));
+
+      let turnStatusEmbed = new Discord.RichEmbed()
+      .setTitle(`Turn ${turnBased.turn} Status`)
+      .setColor("#15f153")
+      .addField(`${turnBased.challengerPlayer.username}`,`HP:〘 ${challengerHPBars} 〙${challengerPercentHP}%`)
+      .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
+      .addField(`${turnBased.challengerPlayer.username}`,`Active Skill: ${turnBased.challengerActiveSkill}`)
+      .addField(`${turnBased.challengedPlayer.username}`,`Active Skill: ${turnBased.challengedActiveSkill}`)
+      /*.addField("Attributes", `Strength: ${lookUpResult.baseAttributeStats.strength.toFixed(0)} \n Intelligence: ${lookUpResult.baseAttributeStats.intelligence.toFixed(0)} \n Vitality: ${lookUpResult.baseAttributeStats.vitality.toFixed(0)} \n Spirit: ${lookUpResult.baseAttributeStats.spirit.toFixed(0)}`)
+      .addField("Attack", `Physical: ${lookUpResult.baseAttackStats.physicalAttack.toFixed(0)} \n Magic: ${lookUpResult.baseAttackStats.magicAttack.toFixed(0)}`, true)
+      .addField("Defense", `Physical: ${lookUpResult.baseDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${lookUpResult.baseDefenseStats.magicDefense.toFixed(0)}`, true)
+      .addField("Resistance", `Physical: ${(lookUpResult.baseResistanceStats.physicalDamageReduction*100).toFixed(2)}% \n Magic: ${(lookUpResult.baseResistanceStats.magicDamageReduction*100).toFixed(2)}%`, true)
+      .addField("Weapon", `Physical Damage: ${lookUpResult.weaponStats.physicalWeaponDamage.toFixed(0)} \n Magic Damage: ${lookUpResult.weaponStats.magicWeaponDamage.toFixed(0)} \n Strength Bonus: ${lookUpResult.weaponStats.strengthWeaponBonus.toFixed(0)} \n Intelligence Bonus: ${lookUpResult.weaponStats.intelligenceWeaponBonus.toFixed(0)} \n Vitality Bonus: ${lookUpResult.weaponStats.vitalityWeaponBonus.toFixed(0)} \n Spirit Bonus: ${lookUpResult.weaponStats.spiritWeaponBonus.toFixed(0)}`, true)
+      .addField("Armor", `Physical Armor: ${lookUpResult.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${lookUpResult.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${lookUpResult.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${lookUpResult.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${lookUpResult.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${lookUpResult.armorStats.spiritArmorBonus.toFixed(0)}`, true)
+      .addField("Skill Levels",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`) //this can be used to emulate the effect of multiple reactions
+      .addField("Chaser Levels",`${lightChaserIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${lookUpResult.skillLevels.dragonToothLevel} ${iceChaserIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fireChaserIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
+      */
+      message.channel.send(turnStatusEmbed);
+      turnBased.nextTurn();
+    }
+  }
+
+  // command to manually update JSON
+  if (command === "updateJSON"){
+    updateJSON();
   }
 
   // Command to let your check your stats
@@ -176,7 +262,7 @@ bot.on("message", async message => {
     const circleSwingIcon = bot.emojis.find(emoji => emoji.name === "CircleSwing")
     const doubleStabIcon = bot.emojis.find(emoji => emoji.name === "DoubleStab")
     const neutralChaserIcon = bot.emojis.find(emoji => emoji.name === "NeutralChaser")
-    const iceChaserIcon = bot.emojis.find(emoji => emoji.name === "WaterChaser")
+    const iceChaserIcon = bot.emojis.find(emoji => emoji.name === "IceChaser")
     const fireChaserIcon = bot.emojis.find(emoji => emoji.name === "FireChaser")
     const shadowChaserIcon = bot.emojis.find(emoji => emoji.name === "ShadowChaser")
     const lightChaserIcon = bot.emojis.find(emoji => emoji.name === "LightChaser")
@@ -197,7 +283,7 @@ bot.on("message", async message => {
     lookUpResult = lookUpPlayerStats(target.id);
     if (lookUpResult === undefined){
       // Post not found in DB info
-      message.channel.send(`${target.user.username} has no match history. Please play a match to check your stats.`);
+      message.channel.send(`${lookUpResult.username} has no match history. Please play a match to check your stats.`);
     } else {
       // Display playerStatsEmbed if command sender is in DB
       let playerStatsEmbed = new Discord.RichEmbed()
@@ -216,17 +302,23 @@ bot.on("message", async message => {
     }
   }
 
+
+
   // Debug Command to See the status of the players during a turn
   if (command === "turnStatus"){
     // Set Turn 1
-    turnBased.initializeMatch();
-    console.log(turnBased.challengerPlayer);
+    //turnBased.initializeMatch();
     // Turn Embed
+    var challengerPercentHP = (turnBased.challengerPlayer.currentResources.HP/turnBased.challengerPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+    var challengerHPBars = "█".repeat((challengerPercentHP/2.5).toFixed(0));
+    var challengedPercentHP = (turnBased.challengedPlayer.currentResources.HP/turnBased.challengedPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+    var challengedHPBars = "█".repeat((challengedPercentHP/2.5).toFixed(0));
+
     let turnStatusEmbed = new Discord.RichEmbed()
     .setTitle(`Turn ${turnBased.turn} Status`)
     .setColor("#15f153")
-    .addField(`${turnBased.challengerPlayer.username}`, `HP: ${turnBased.challengerPlayer.currentResources.HP.toFixed(0)}/${turnBased.challengerPlayer.effectiveMaxResourceStats.HP.toFixed(0)}`,true)
-    .addField(`${turnBased.challengedPlayer.username}`, `HP: ${turnBased.challengedPlayer.currentResources.HP.toFixed(0)}/${turnBased.challengedPlayer.effectiveMaxResourceStats.HP.toFixed(0)}`,true)
+    .addField(`${turnBased.challengerPlayer.username}`,`HP:〘 ${challengerHPBars} 〙${challengerPercentHP}%`)
+    .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
     /*.addField("Attributes", `Strength: ${lookUpResult.baseAttributeStats.strength.toFixed(0)} \n Intelligence: ${lookUpResult.baseAttributeStats.intelligence.toFixed(0)} \n Vitality: ${lookUpResult.baseAttributeStats.vitality.toFixed(0)} \n Spirit: ${lookUpResult.baseAttributeStats.spirit.toFixed(0)}`)
     .addField("Attack", `Physical: ${lookUpResult.baseAttackStats.physicalAttack.toFixed(0)} \n Magic: ${lookUpResult.baseAttackStats.magicAttack.toFixed(0)}`, true)
     .addField("Defense", `Physical: ${lookUpResult.baseDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${lookUpResult.baseDefenseStats.magicDefense.toFixed(0)}`, true)

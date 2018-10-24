@@ -178,7 +178,6 @@ var Player = class {
 	// Calculate Skill Stats
 	calculateSkillValues(skillName){
 		if (this.className = "Battle Mage"){
-
 			// Calculate Stab Stats
 			if (skillName == "Stab"){
 				var stab = new Skill("Stab", stabDamageScaling, emptyBuff, 0, 0, false)
@@ -557,6 +556,7 @@ module.exports.Game = class {
 		this.turn = 1;
 		this.challengerActiveSkill = undefined;
 		this.challengedActiveSkill = undefined;
+		console.log("match initialized");
 	}
 
 	// Initial Values for next turn
@@ -566,16 +566,14 @@ module.exports.Game = class {
 		this.challengedActiveSkill = undefined;
 	}
 	
-	// Calculate Skill Damages
+	// Calculate Skill Damage
 	calculateSkillDamage(player,skillname){
-		var skill = calculateSkillValues(skillname);
+		var skill = player.calculateSkillValues(skillname);
 		var skillAttackStats = player.calculateAttackStats(skill.damageScaling, player.effectiveAttributeStats);
-		if (player === this.challengerPlayer){
-			this.challengerActiveSkill = skill;
+		if (player.ID === this.challengerPlayer.ID){
 			var skillDamage = player.calculateDamage(this.challengedPlayer.effectiveResistanceStats, skillAttackStats);
 			player.dealDamage(this.challengedPlayer, skillDamage);
-		} else if (player === this.challengedPlayer){
-			this.challengedActiveSkill = skill;
+		} else if (player.ID === this.challengedPlayer.ID){
 			var skillDamage = player.calculateDamage(this.challengerPlayer.effectiveResistanceStats, skillAttackStats);
 			player.dealDamage(this.challengerPlayer, skillDamage);
 		} else {
