@@ -28,7 +28,7 @@ fs.readdir("./commands/", (err,files) =>{
 
 // Replacer Helper Function for 
 function replacer(key, value) {
-  var ignoredProperties = ["activeSkill", "effectiveAttributeStats", "currentResources", "effectiveMaxResourceStats", "effectiveDefenseStats", "effectiveResistanceStats", "effectiveAttackStats"]
+  var ignoredProperties = ["skillCooldowns", "effectiveAttributeStats", "currentResources", "effectiveMaxResourceStats", "effectiveDefenseStats", "effectiveResistanceStats", "effectiveAttackStats"]
   // Filtering out properties
   if (ignoredProperties.includes(key)) {
     return undefined;
@@ -71,10 +71,46 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function demo() {
-  console.log('Taking a break...');
+// Recursive Timer for ending turns if either of the players fail to input a skill in the reqired time 
+async function turnTimer(message) {
+  var initialTurn = turnBased.turn;
   await sleep(30000);
-  console.log('Two seconds later');
+  //Check if the turn has not yet progressed from completed inputs
+  if (turnBased.turn !== initialTurn){
+    return;
+  }
+  //Check if the match is still running
+  if (turnBased.gameState !== "Active Match") {
+    return;
+  }
+
+  // Deal damage if either of the players input a skill
+  if(turnBased.challengerActiveSkill !== undefined){
+    turnBased.calculateSkillDamage(turnBased.challengerPlayer, turnBased.challengerActiveSkill);
+  }
+  if(turnBased.challengedActiveSkill !== undefined){
+    turnBased.calculateSkillDamage(turnBased.challengedPlayer, turnBased.challengedActiveSkill);
+  }
+
+  // Send turnStatus embed
+  var challengerPercentHP = (turnBased.challengerPlayer.currentResources.HP/turnBased.challengerPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+  var challengerHPBars = "█".repeat((challengerPercentHP/5).toFixed(0));
+  var challengedPercentHP = (turnBased.challengedPlayer.currentResources.HP/turnBased.challengedPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
+  var challengedHPBars = "█".repeat((challengedPercentHP/5).toFixed(0));
+  let turnStatusEmbed = new Discord.RichEmbed()
+  .setTitle(`Turn ${turnBased.turn} Status`)
+  .setColor("#15f153")
+  .addField(`${turnBased.challengerPlayer.username}`,`HP:〘 ${challengerHPBars} 〙${challengerPercentHP}%`)
+  .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
+  .addField(`${turnBased.challengerPlayer.username}`,`Active Skill: ${turnBased.challengerActiveSkill}`)
+  .addField(`${turnBased.challengedPlayer.username}`,`Active Skill: ${turnBased.challengedActiveSkill}`)
+  message.channel.send(turnStatusEmbed);
+
+  // Go to the next turn since the turn timer has run out
+  turnBased.nextTurn();
+
+  // Recursively reset the turn timer
+  turnTimer(message);
 }
 
 // Event Handling for when bot come online
@@ -164,13 +200,21 @@ bot.on("message", async message => {
 
     //Set Turn to 1 and clear active Skills
     turnBased.initializeMatch();
+    turnBased.gameState = "Active Match";
+    turnTimer(message);
 
     // Update Player Stats at end of game
     if (newPlayer === true){
       updateJSON();
     }
 
-
+    await sleep(300000);
+    turnBased.calculateResults();
+    updateJSON();
+    console.log(turnBased.challengerPlayer.matchRecord);
+    console.log(turnBased.challengedPlayer.matchRecord);
+    message.channel.send(`Game Over`);
+    turnBased.gameState = "No Match";
   }
 
 
@@ -179,7 +223,31 @@ bot.on("message", async message => {
 
   }
 
-  // command to get skill input
+  // Command for leaderboard
+  if (command === "leaderboard"){
+    playerStatsDB.sort(function(a, b){return b - a});
+    var rankString = [];
+    var usernameString = [];
+    var eloString = [];
+    for (var i = 0; i < playerStatsDB.length; i++) {
+      rankString.push(i+1);
+      usernameString.push(playerStatsDB[i].username);
+      eloString.push(playerStatsDB[i].matchRecord.elo.toFixed(0));
+    }
+    rankString.join('\n');
+    usernameString.join('\n');
+    eloString.join('\n');
+    console.log(rankString);
+    let leaderboardEmbed = new Discord.RichEmbed()
+    .setTitle(`Leaderboard`)
+    .setColor("#15f153")
+    .addField("Rank", rankString, true)
+    .addField("Player", usernameString, true)
+    .addField("Elo", eloString, true)
+    return message.channel.send(leaderboardEmbed);
+  }
+
+  // Command to get skill input
   if (command === "skill"){
     if (args[0] === undefined) return;
     var skillInput = args[0];
@@ -245,10 +313,11 @@ bot.on("message", async message => {
       */
       message.channel.send(turnStatusEmbed);
       turnBased.nextTurn();
+      turnTimer(message);
     }
   }
 
-  // command to manually update JSON
+  // Command to manually update JSON
   if (command === "updateJSON"){
     updateJSON();
   }
@@ -298,7 +367,8 @@ bot.on("message", async message => {
       .addField("Armor", `Physical Armor: ${lookUpResult.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${lookUpResult.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${lookUpResult.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${lookUpResult.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${lookUpResult.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${lookUpResult.armorStats.spiritArmorBonus.toFixed(0)}`, true)
       .addField("Skill Levels",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`) //this can be used to emulate the effect of multiple reactions
       .addField("Chaser Levels",`${lightChaserIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${lookUpResult.skillLevels.dragonToothLevel} ${iceChaserIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fireChaserIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
-      return message.channel.send(playerStatsEmbed)
+      .addField("Match Record",`ELO: ${lookUpResult.matchRecord.elo.toFixed(0)} \n Wins: ${lookUpResult.matchRecord.wins} \n Losses: ${lookUpResult.matchRecord.losses}`)
+      return message.channel.send(playerStatsEmbed);
     }
   }
 

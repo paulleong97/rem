@@ -30,7 +30,7 @@ var rUser;  //the person who is pinged
 var playerOnehp = 1000; //playerOne current hp
 var playerTwohp = 1000; //playerTwo current hp
 var playerOneLife;  //contains the string of the health bar of player 1
-var playerTwoLife;   //contains the string of the health bar of player 2
+var playerTwoLife;  //contains the string of the health bar of player 2
 var playerOneLastUsedSkill;
 var playerTwoLastUsedSkill;
 

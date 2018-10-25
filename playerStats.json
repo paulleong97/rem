@@ -2,6 +2,11 @@
 	{
 		"ID": "114231763902922752",
 		"username": "Kanoue Yuuma",
+		"matchRecord": {
+			"elo": 1324.259939326928,
+			"wins": 3,
+			"losses": 0
+		},
 		"className": "Battle Mage",
 		"skillLevels": {
 			"skyStrikeLevel": 10,
@@ -9,81 +14,6 @@
 			"doubleStabLevel": 10,
 			"fallingFlowerPalmLevel": 10,
 			"circleSwingLevel": 10
-		},
-		"skillCooldowns": {
-			"skyStrikeCooldown": 4,
-			"dragonToothCooldown": 4,
-			"doubleStabCooldown": 16,
-			"fallingFlowerPalmCooldown": 6,
-			"circleSwingCooldown": 8
-		},
-		"unitStats": {
-			"level": 70,
-			"questStatPoints": 30
-		},
-		"classScalingStats": {
-			"strengthScaling": 3.5,
-			"intelligenceScaling": 3.5,
-			"vitalityScaling": 2.5,
-			"spiritScaling": 2.5
-		},
-		"armorStats": {
-			"physicalArmor": 30,
-			"magicArmor": 100,
-			"strengthArmorBonus": 100,
-			"intelligenceArmorBonus": 100,
-			"vitalityArmorBonus": 100,
-			"spiritArmorBonus": 100
-		},
-		"weaponStats": {
-			"physicalWeaponDamage": 30,
-			"magicWeaponDamage": 100,
-			"strengthWeaponBonus": 100,
-			"intelligenceWeaponBonus": 100,
-			"vitalityWeaponBonus": 100,
-			"spiritWeaponBonus": 100
-		},
-		"baseAttributeStats": {
-			"strength": 1050,
-			"intelligence": 1050,
-			"vitality": 750,
-			"spirit": 750
-		},
-		"baseMaxResourceStats": {
-			"HP": 10750,
-			"MP": 8750,
-			"Stamina": 7250
-		},
-		"baseDefenseStats": {
-			"physicalDefense": 1080,
-			"magicDefense": 1150
-		},
-		"baseResistanceStats": {
-			"physicalDamageReduction": 0.09326424870466321,
-			"magicDamageReduction": 0.09871244635193133
-		},
-		"baseAttackStats": {
-			"physicalAttack": 210,
-			"magicAttack": 700
-		}
-	},
-	{
-		"ID": "391975479604805635",
-		"username": "pol",
-		"className": "Battle Mage",
-		"skillLevels": {
-			"skyStrikeLevel": 10,
-			"dragonToothLevel": 10,
-			"doubleStabLevel": 10,
-			"fallingFlowerPalmLevel": 10,
-			"circleSwingLevel": 10
-		},
-		"skillCooldowns": {
-			"skyStrikeCooldown": 4,
-			"dragonToothCooldown": 4,
-			"doubleStabCooldown": 16,
-			"fallingFlowerPalmCooldown": 6,
-			"circleSwingCooldown": 8
 		},
 		"unitStats": {
 			"level": 70,
@@ -138,6 +68,11 @@
 	{
 		"ID": "490302456023089162",
 		"username": "GloryBot",
+		"matchRecord": {
+			"elo": 1125.740060673072,
+			"wins": 0,
+			"losses": 2
+		},
 		"className": "Battle Mage",
 		"skillLevels": {
 			"skyStrikeLevel": 10,
@@ -145,13 +80,6 @@
 			"doubleStabLevel": 10,
 			"fallingFlowerPalmLevel": 10,
 			"circleSwingLevel": 10
-		},
-		"skillCooldowns": {
-			"skyStrikeCooldown": 4,
-			"dragonToothCooldown": 4,
-			"doubleStabCooldown": 16,
-			"fallingFlowerPalmCooldown": 6,
-			"circleSwingCooldown": 8
 		},
 		"unitStats": {
 			"level": 70,
@@ -206,6 +134,11 @@
 	{
 		"ID": "248531929291423746",
 		"username": "Lemniscate",
+		"matchRecord": {
+			"elo": 1150,
+			"wins": 0,
+			"losses": 1
+		},
 		"className": "Battle Mage",
 		"skillLevels": {
 			"skyStrikeLevel": 10,
@@ -213,13 +146,6 @@
 			"doubleStabLevel": 10,
 			"fallingFlowerPalmLevel": 10,
 			"circleSwingLevel": 10
-		},
-		"skillCooldowns": {
-			"skyStrikeCooldown": 4,
-			"dragonToothCooldown": 4,
-			"doubleStabCooldown": 16,
-			"fallingFlowerPalmCooldown": 6,
-			"circleSwingCooldown": 8
 		},
 		"unitStats": {
 			"level": 70,
