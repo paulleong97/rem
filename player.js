@@ -180,10 +180,35 @@ var Player = class {
 		this.skillLevels = new BattleMageSkillLevels(skyStrikeLevel, dragonToothLevel, doubleStabLevel, fallingFlowerPalmLevel, circleSwingLevel);
 	}
 
-	// Initialize Battle Mage Cooldown
+	// Initialize Battle Mage Cooldowns
 	initializeBattleMageSkillCooldowns(){
-		this.skillCooldowns = new BattleMageCooldowns(skyStrikeCooldown, dragonToothCooldown, doubleStabCooldown, fallingFlowerPalmCooldown, circleSwingCooldown);
+		this.baseSkillCooldowns = new BattleMageCooldowns(skyStrikeCooldown, dragonToothCooldown, doubleStabCooldown, fallingFlowerPalmCooldown, circleSwingCooldown);
 	}
+
+	// Reset Current Cooldowns
+	clearBattleMageSkillCooldowns(){
+		this.currentSkillCooldowns = new BattleMageCooldowns(0, 0, 0, 0, 0);
+	}
+
+	// Reduce cooldowns at end of turn
+	decrementBattleMageSkillCooldowns(){
+		if (this.currentSkillCooldowns.skyStrikeCooldown > 0){
+			this.currentSkillCooldowns.skyStrikeCooldown--;
+		}
+		if (this.currentSkillCooldowns.dragonToothCooldown > 0){
+			this.currentSkillCooldowns.dragonToothCooldown--;
+		}
+		if (this.currentSkillCooldowns.doubleStabCooldown > 0){
+			this.currentSkillCooldowns.doubleStabCooldown--;
+		}
+		if (this.currentSkillCooldowns.fallingFlowerPalmCooldown > 0){
+			this.currentSkillCooldowns.fallingFlowerPalmCooldown--;
+		}
+		if (this.currentSkillCooldowns.circleSwingCooldown > 0){
+			this.currentSkillCooldowns.circleSwingCooldown--;
+		}
+	}
+
 
 	// Calculate Skill Stats
 	calculateSkillValues(skillName){
@@ -339,6 +364,7 @@ var Player = class {
 		this.setClass("Battle Mage")
 		this.setBattleMageSkillLevels(10,10,10,10,10)
 		this.initializeBattleMageSkillCooldowns()
+		this.clearBattleMageSkillCooldowns()
 		this.initializeUnitStats()
 		this.initializeClassScalingStats()
 		this.initializeArmorStats(30,30,100,100,100,100)
@@ -357,7 +383,8 @@ var Player = class {
 		this.matchRecord = player.matchRecord
 		this.className = player.className
 		this.skillLevels = player.skillLevels
-		this.skillCooldowns = player.skillCooldowns
+		this.initializeBattleMageSkillCooldowns()
+		this.clearBattleMageSkillCooldowns()
 		this.unitStats = player.unitStats
 		this.classScalingStats = player.classScalingStats
 		this.armorStats = player.armorStats
@@ -572,11 +599,27 @@ module.exports.Game = class {
 	}
 
 	// Initial Values for next turn
-	nextTurn(){
-		this.turn++;
-		this.challengerActiveSkill = undefined;
-		this.challengedActiveSkill = undefined;
-		console.log("next turn");
+	nextTurn(message){
+		if ((this.challengerPlayer.currentResources.HP <= 0) || (this.challengedPlayer.currentResources.HP <= 0)){
+			// Find the winner
+			var winnerName = this.calculateResults();
+			// Update the Elo
+			updateJSON();
+			// Update game state
+			this.gameState = "No Match";
+			// Print Finished match message
+			let endMatchEmbed = new Discord.RichEmbed()
+			.setTitle(`${winnerName} Wins!`)
+			.setColor("#15f153")
+			.addField(`${this.challengerPlayer.username}`,`ELO: ${this.challengerPlayer.matchRecord.elo.toFixed(0)} \n Wins: ${this.challengerPlayer.matchRecord.wins} \n Losses: ${this.challengerPlayer.matchRecord.losses}`, true)
+			.addField(`${this.challengedPlayer.username}`,`ELO: ${this.challengedPlayer.matchRecord.elo.toFixed(0)} \n Wins: ${this.challengedPlayer.matchRecord.wins} \n Losses: ${this.challengedPlayer.matchRecord.losses}`, true)
+			message.channel.send(endMatchEmbed);
+		} else {
+			this.turn++;
+			this.challengerActiveSkill = undefined;
+			this.challengedActiveSkill = undefined;
+			console.log("next turn");
+		}
 	}
 	
 	// Calculate Skill Damage
@@ -615,6 +658,7 @@ module.exports.Game = class {
 			this.challengedPlayer.matchRecord.losses++;
 			this.challengerPlayer.matchRecord.elo = this.challengerPlayer.matchRecord.elo + k * (1 - challengerPlayerWinProbability);
 			this.challengedPlayer.matchRecord.elo = this.challengedPlayer.matchRecord.elo + k * (0 - challengedPlayerWinProbability);
+			return(this.challengerPlayer.username);
 		} 
 		// If challengedPlayer wins
 		else if (challengedPercentRemainingHP > challengerPercentRemainingHP){
@@ -622,9 +666,11 @@ module.exports.Game = class {
 			this.challengerPlayer.matchRecord.losses++;
 			this.challengerPlayer.matchRecord.elo = this.challengerPlayer.matchRecord.elo + k * (0 - challengerPlayerWinProbability);
 			this.challengedPlayer.matchRecord.elo = this.challengedPlayer.matchRecord.elo + k * (1 - challengedPlayerWinProbability);
+			return(this.challengedPlayer.username);
 		}
 		// Its a draw
 		else {
+			return undefined;
 		}
 	}
 	

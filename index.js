@@ -28,7 +28,7 @@ fs.readdir("./commands/", (err,files) =>{
 
 // Replacer Helper Function for 
 function replacer(key, value) {
-  var ignoredProperties = ["skillCooldowns", "effectiveAttributeStats", "currentResources", "effectiveMaxResourceStats", "effectiveDefenseStats", "effectiveResistanceStats", "effectiveAttackStats"]
+  var ignoredProperties = ["baseSkillCooldowns", "currentSkillCooldowns", "effectiveAttributeStats", "currentResources", "effectiveMaxResourceStats", "effectiveDefenseStats", "effectiveResistanceStats", "effectiveAttackStats", "activeSkill","activeBuffs"]
   // Filtering out properties
   if (ignoredProperties.includes(key)) {
     return undefined;
@@ -74,7 +74,7 @@ function sleep(ms) {
 // Recursive Timer for ending turns if either of the players fail to input a skill in the reqired time 
 async function turnTimer(message) {
   var initialTurn = turnBased.turn;
-  await sleep(30000);
+  await sleep(10000);
   //Check if the turn has not yet progressed from completed inputs
   if (turnBased.turn !== initialTurn){
     return;
@@ -107,7 +107,7 @@ async function turnTimer(message) {
   message.channel.send(turnStatusEmbed);
 
   // Go to the next turn since the turn timer has run out
-  turnBased.nextTurn();
+  turnBased.nextTurn(message);
 
   // Recursively reset the turn timer
   turnTimer(message);
@@ -158,6 +158,11 @@ bot.on("message", async message => {
   // Initialize Arena Match Command
   if (command === "pk"){
 
+    // Check to see if a match is still in progress
+    if( turnBased.gameState === "Active Match"){
+      // PK in progress message
+      return message.channel.send(`${turnBased.challengerPlayer.username} is still in a match with ${turnBased.challengedPlayer.username}. Please wait until their match is over before issuing another challenge.`);
+    }
     // Update the local DB with JSON Values
     updateLocalDB();
 
@@ -203,18 +208,24 @@ bot.on("message", async message => {
     turnBased.gameState = "Active Match";
     turnTimer(message);
 
-    // Update Player Stats at end of game
-    if (newPlayer === true){
-      updateJSON();
-    }
-
+    // Wait 5 minutes for end of game
     await sleep(300000);
-    turnBased.calculateResults();
-    updateJSON();
-    console.log(turnBased.challengerPlayer.matchRecord);
-    console.log(turnBased.challengedPlayer.matchRecord);
-    message.channel.send(`Game Over`);
-    turnBased.gameState = "No Match";
+    // If the same match between the two players is still going on
+    if ((turnBased.gameState === "Active Match") && (challenger.id === turnBased.challengerPlayer.ID) && (challenged.id === turnBased.challengedPlayer.ID)){
+      // Find the winner
+      var winnerName = turnBased.calculateResults();
+      // Update the Elo
+      updateJSON();
+      // Update game state
+      turnBased.gameState = "No Match";
+      // Print Finished match message
+      let endMatchEmbed = new Discord.RichEmbed()
+      .setTitle(`${winnerName} Wins!`)
+      .setColor("#15f153")
+      .addField(`${turnBased.challengerPlayer.username}`,`ELO: ${turnBased.challengerPlayer.matchRecord.elo.toFixed(0)} \n Wins: ${turnBased.challengerPlayer.matchRecord.wins} \n Losses: ${turnBased.challengerPlayer.matchRecord.losses}`, true)
+      .addField(`${turnBased.challengedPlayer.username}`,`ELO: ${turnBased.challengedPlayer.matchRecord.elo.toFixed(0)} \n Wins: ${turnBased.challengedPlayer.matchRecord.wins} \n Losses: ${turnBased.challengedPlayer.matchRecord.losses}`, true)
+      message.channel.send(endMatchEmbed);
+    }
   }
 
 
@@ -225,7 +236,10 @@ bot.on("message", async message => {
 
   // Command for leaderboard
   if (command === "leaderboard"){
-    playerStatsDB.sort(function(a, b){return b - a});
+    // Update the local DB
+    updateLocalDB();
+
+    playerStatsDB.sort(function(a, b){return b.matchRecord.elo - a.matchRecord.elo});
     var rankString = [];
     var usernameString = [];
     var eloString = [];
@@ -250,6 +264,7 @@ bot.on("message", async message => {
   // Command to get skill input
   if (command === "skill"){
     if (args[0] === undefined) return;
+    var inputtingMember = message.guild.member(message.author);
     var skillInput = args[0];
     var skillUsed = ""
 
@@ -279,12 +294,23 @@ bot.on("message", async message => {
     }
 
     // Find if challenger or challenged is inputting skill and set Active Skill for that player
-    var inputtingMember = message.guild.member(message.author);
     if (inputtingMember.id === turnBased.challengerPlayer.ID){
       turnBased.challengerActiveSkill = skillUsed;
     } else if (inputtingMember.id === turnBased.challengedPlayer.ID){
       turnBased.challengedActiveSkill = skillUsed;
     }
+
+    // Skill icons definitions
+    const skyStrikeIcon = bot.emojis.find(emoji => emoji.name === "SkyStrike")
+    const dragonToothIcon = bot.emojis.find(emoji => emoji.name === "DragonTooth")
+    const fallingFlowerPalmIcon = bot.emojis.find(emoji => emoji.name === "FallingFlowerPalm")
+    const circleSwingIcon = bot.emojis.find(emoji => emoji.name === "CircleSwing")
+    const doubleStabIcon = bot.emojis.find(emoji => emoji.name === "DoubleStab")
+    const neutralChaserIcon = bot.emojis.find(emoji => emoji.name === "NeutralChaser")
+    const iceChaserIcon = bot.emojis.find(emoji => emoji.name === "IceChaser")
+    const fireChaserIcon = bot.emojis.find(emoji => emoji.name === "FireChaser")
+    const shadowChaserIcon = bot.emojis.find(emoji => emoji.name === "ShadowChaser")
+    const lightChaserIcon = bot.emojis.find(emoji => emoji.name === "LightChaser")
 
     // If there is an active skill for both players, deal damage and go to next turn
     if((turnBased.challengerActiveSkill !== undefined) && (turnBased.challengedActiveSkill !== undefined)){
@@ -302,17 +328,20 @@ bot.on("message", async message => {
       .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
       .addField(`${turnBased.challengerPlayer.username}`,`Active Skill: ${turnBased.challengerActiveSkill}`)
       .addField(`${turnBased.challengedPlayer.username}`,`Active Skill: ${turnBased.challengedActiveSkill}`)
+      .addField("Skill Cooldowns",`${skyStrikeIcon}${turnBased.challengerPlayer.currentSkillCooldowns.skyStrike} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
+      .addField("Skill Cooldowns",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
+      
       /*.addField("Attributes", `Strength: ${lookUpResult.baseAttributeStats.strength.toFixed(0)} \n Intelligence: ${lookUpResult.baseAttributeStats.intelligence.toFixed(0)} \n Vitality: ${lookUpResult.baseAttributeStats.vitality.toFixed(0)} \n Spirit: ${lookUpResult.baseAttributeStats.spirit.toFixed(0)}`)
       .addField("Attack", `Physical: ${lookUpResult.baseAttackStats.physicalAttack.toFixed(0)} \n Magic: ${lookUpResult.baseAttackStats.magicAttack.toFixed(0)}`, true)
       .addField("Defense", `Physical: ${lookUpResult.baseDefenseStats.physicalDefense.toFixed(0)} \n Magic: ${lookUpResult.baseDefenseStats.magicDefense.toFixed(0)}`, true)
       .addField("Resistance", `Physical: ${(lookUpResult.baseResistanceStats.physicalDamageReduction*100).toFixed(2)}% \n Magic: ${(lookUpResult.baseResistanceStats.magicDamageReduction*100).toFixed(2)}%`, true)
       .addField("Weapon", `Physical Damage: ${lookUpResult.weaponStats.physicalWeaponDamage.toFixed(0)} \n Magic Damage: ${lookUpResult.weaponStats.magicWeaponDamage.toFixed(0)} \n Strength Bonus: ${lookUpResult.weaponStats.strengthWeaponBonus.toFixed(0)} \n Intelligence Bonus: ${lookUpResult.weaponStats.intelligenceWeaponBonus.toFixed(0)} \n Vitality Bonus: ${lookUpResult.weaponStats.vitalityWeaponBonus.toFixed(0)} \n Spirit Bonus: ${lookUpResult.weaponStats.spiritWeaponBonus.toFixed(0)}`, true)
       .addField("Armor", `Physical Armor: ${lookUpResult.armorStats.physicalArmor.toFixed(0)} \n Magic Armor: ${lookUpResult.armorStats.magicArmor.toFixed(0)} \n Strength Bonus: ${lookUpResult.armorStats.strengthArmorBonus.toFixed(0)} \n Intelligence Bonus: ${lookUpResult.armorStats.intelligenceArmorBonus.toFixed(0)} \n Vitality Bonus: ${lookUpResult.armorStats.vitalityArmorBonus.toFixed(0)} \n Spirit Bonus: ${lookUpResult.armorStats.spiritArmorBonus.toFixed(0)}`, true)
-      .addField("Skill Levels",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`) //this can be used to emulate the effect of multiple reactions
+      .addField("Skill Cooldowns",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`) //this can be used to emulate the effect of multiple reactions
       .addField("Chaser Levels",`${lightChaserIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${neutralChaserIcon}${lookUpResult.skillLevels.dragonToothLevel} ${iceChaserIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fireChaserIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${shadowChaserIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
       */
       message.channel.send(turnStatusEmbed);
-      turnBased.nextTurn();
+      turnBased.nextTurn(message);
       turnTimer(message);
     }
   }
