@@ -84,13 +84,31 @@ async function turnTimer(message) {
     return;
   }
 
-  // Deal damage if either of the players input a skill
+  // Decrement Cooldowns
+  turnBased.challengerPlayer.decrementBattleMageSkillCooldowns();
+  turnBased.challengedPlayer.decrementBattleMageSkillCooldowns();  
+
+  // Deal damage and update skill cooldown if either of the players input a skill
   if(turnBased.challengerActiveSkill !== undefined){
     turnBased.calculateSkillDamage(turnBased.challengerPlayer, turnBased.challengerActiveSkill);
+    turnBased.challengerPlayer.updateCooldownForUsedSkill(turnBased.challengerActiveSkill, message);
   }
   if(turnBased.challengedActiveSkill !== undefined){
     turnBased.calculateSkillDamage(turnBased.challengedPlayer, turnBased.challengedActiveSkill);
+    turnBased.challengedPlayer.updateCooldownForUsedSkill(turnBased.challengedActiveSkill, message);
   }
+
+  // Skill icons definitions
+  const skyStrikeIcon = bot.emojis.find(emoji => emoji.name === "SkyStrike")
+  const dragonToothIcon = bot.emojis.find(emoji => emoji.name === "DragonTooth")
+  const fallingFlowerPalmIcon = bot.emojis.find(emoji => emoji.name === "FallingFlowerPalm")
+  const circleSwingIcon = bot.emojis.find(emoji => emoji.name === "CircleSwing")
+  const doubleStabIcon = bot.emojis.find(emoji => emoji.name === "DoubleStab")
+  const neutralChaserIcon = bot.emojis.find(emoji => emoji.name === "NeutralChaser")
+  const iceChaserIcon = bot.emojis.find(emoji => emoji.name === "IceChaser")
+  const fireChaserIcon = bot.emojis.find(emoji => emoji.name === "FireChaser")
+  const shadowChaserIcon = bot.emojis.find(emoji => emoji.name === "ShadowChaser")
+  const lightChaserIcon = bot.emojis.find(emoji => emoji.name === "LightChaser")
 
   // Send turnStatus embed
   var challengerPercentHP = (turnBased.challengerPlayer.currentResources.HP/turnBased.challengerPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
@@ -104,6 +122,8 @@ async function turnTimer(message) {
   .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
   .addField(`${turnBased.challengerPlayer.username}`,`Active Skill: ${turnBased.challengerActiveSkill}`)
   .addField(`${turnBased.challengedPlayer.username}`,`Active Skill: ${turnBased.challengedActiveSkill}`)
+  .addField(`${turnBased.challengerPlayer.username} Skill Cooldowns`,`${skyStrikeIcon}${turnBased.challengerPlayer.currentSkillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${turnBased.challengerPlayer.currentSkillCooldowns.dragonToothCooldown} ${doubleStabIcon}${turnBased.challengerPlayer.currentSkillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${turnBased.challengerPlayer.currentSkillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${turnBased.challengerPlayer.currentSkillCooldowns.circleSwingCooldown}`)
+  .addField(`${turnBased.challengedPlayer.username} Skill Cooldowns`,`${skyStrikeIcon}${turnBased.challengedPlayer.currentSkillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${turnBased.challengedPlayer.currentSkillCooldowns.dragonToothCooldown} ${doubleStabIcon}${turnBased.challengedPlayer.currentSkillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${turnBased.challengedPlayer.currentSkillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${turnBased.challengedPlayer.currentSkillCooldowns.circleSwingCooldown}`)
   message.channel.send(turnStatusEmbed);
 
   // Go to the next turn since the turn timer has run out
@@ -209,7 +229,7 @@ bot.on("message", async message => {
     turnTimer(message);
 
     // Wait 5 minutes for end of game
-    await sleep(300000);
+    await sleep(60000);
     // If the same match between the two players is still going on
     if ((turnBased.gameState === "Active Match") && (challenger.id === turnBased.challengerPlayer.ID) && (challenged.id === turnBased.challengedPlayer.ID)){
       // Find the winner
@@ -314,8 +334,19 @@ bot.on("message", async message => {
 
     // If there is an active skill for both players, deal damage and go to next turn
     if((turnBased.challengerActiveSkill !== undefined) && (turnBased.challengedActiveSkill !== undefined)){
+      // Decrement Cooldowns
+      turnBased.challengerPlayer.decrementBattleMageSkillCooldowns();
+      turnBased.challengedPlayer.decrementBattleMageSkillCooldowns();
+
+      // Reset Cooldown for used skill
+      turnBased.challengerPlayer.updateCooldownForUsedSkill(turnBased.challengerActiveSkill, message);
+      turnBased.challengedPlayer.updateCooldownForUsedSkill(turnBased.challengedActiveSkill, message);
+
+      // Calculate and Apply Damage to opponent
       turnBased.calculateSkillDamage(turnBased.challengerPlayer, turnBased.challengerActiveSkill);
       turnBased.calculateSkillDamage(turnBased.challengedPlayer, turnBased.challengedActiveSkill);
+
+      // Create embed field strings
       var challengerPercentHP = (turnBased.challengerPlayer.currentResources.HP/turnBased.challengerPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
       var challengerHPBars = "█".repeat((challengerPercentHP/5).toFixed(0));
       var challengedPercentHP = (turnBased.challengedPlayer.currentResources.HP/turnBased.challengedPlayer.effectiveMaxResourceStats.HP*100).toFixed(0);
@@ -328,8 +359,8 @@ bot.on("message", async message => {
       .addField(`${turnBased.challengedPlayer.username}`,`HP:〘 ${challengedHPBars} 〙${challengedPercentHP}%`)
       .addField(`${turnBased.challengerPlayer.username}`,`Active Skill: ${turnBased.challengerActiveSkill}`)
       .addField(`${turnBased.challengedPlayer.username}`,`Active Skill: ${turnBased.challengedActiveSkill}`)
-      .addField("Skill Cooldowns",`${skyStrikeIcon}${turnBased.challengerPlayer.currentSkillCooldowns.skyStrike} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
-      .addField("Skill Cooldowns",`${skyStrikeIcon}${lookUpResult.skillLevels.skyStrikeLevel} ${dragonToothIcon}${lookUpResult.skillLevels.dragonToothLevel} ${doubleStabIcon}${lookUpResult.skillLevels.doubleStabLevel} ${fallingFlowerPalmIcon}${lookUpResult.skillLevels.fallingFlowerPalmLevel} ${circleSwingIcon}${lookUpResult.skillLevels.circleSwingLevel}`)
+      .addField(`${turnBased.challengerPlayer.username} Skill Cooldowns`,`${skyStrikeIcon}${turnBased.challengerPlayer.currentSkillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${turnBased.challengerPlayer.currentSkillCooldowns.dragonToothCooldown} ${doubleStabIcon}${turnBased.challengerPlayer.currentSkillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${turnBased.challengerPlayer.currentSkillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${turnBased.challengerPlayer.currentSkillCooldowns.circleSwingCooldown}`)
+      .addField(`${turnBased.challengedPlayer.username} Skill Cooldowns`,`${skyStrikeIcon}${turnBased.challengedPlayer.currentSkillCooldowns.skyStrikeCooldown} ${dragonToothIcon}${turnBased.challengedPlayer.currentSkillCooldowns.dragonToothCooldown} ${doubleStabIcon}${turnBased.challengedPlayer.currentSkillCooldowns.doubleStabCooldown} ${fallingFlowerPalmIcon}${turnBased.challengedPlayer.currentSkillCooldowns.fallingFlowerPalmCooldown} ${circleSwingIcon}${turnBased.challengedPlayer.currentSkillCooldowns.circleSwingCooldown}`)
       
       /*.addField("Attributes", `Strength: ${lookUpResult.baseAttributeStats.strength.toFixed(0)} \n Intelligence: ${lookUpResult.baseAttributeStats.intelligence.toFixed(0)} \n Vitality: ${lookUpResult.baseAttributeStats.vitality.toFixed(0)} \n Spirit: ${lookUpResult.baseAttributeStats.spirit.toFixed(0)}`)
       .addField("Attack", `Physical: ${lookUpResult.baseAttackStats.physicalAttack.toFixed(0)} \n Magic: ${lookUpResult.baseAttackStats.magicAttack.toFixed(0)}`, true)

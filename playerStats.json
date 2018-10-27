@@ -3,9 +3,9 @@
 		"ID": "114231763902922752",
 		"username": "Kanoue Yuuma",
 		"matchRecord": {
-			"elo": 1420.531035164083,
-			"wins": 9,
-			"losses": 0
+			"elo": 1320.3034177572144,
+			"wins": 17,
+			"losses": 2
 		},
 		"className": "Battle Mage",
 		"skillLevels": {
@@ -69,9 +69,9 @@
 		"ID": "490302456023089162",
 		"username": "GloryBot",
 		"matchRecord": {
-			"elo": 1029.468964835917,
+			"elo": 971.9893396133643,
 			"wins": 0,
-			"losses": 8
+			"losses": 16
 		},
 		"className": "Battle Mage",
 		"skillLevels": {
@@ -135,8 +135,8 @@
 		"ID": "248531929291423746",
 		"username": "Lemniscate",
 		"matchRecord": {
-			"elo": 1150,
-			"wins": 0,
+			"elo": 1307.7072426294214,
+			"wins": 2,
 			"losses": 1
 		},
 		"className": "Battle Mage",

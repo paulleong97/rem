@@ -192,6 +192,7 @@ var Player = class {
 
 	// Reduce cooldowns at end of turn
 	decrementBattleMageSkillCooldowns(){
+		console.log("Decrementing Skill Cooldowns");
 		if (this.currentSkillCooldowns.skyStrikeCooldown > 0){
 			this.currentSkillCooldowns.skyStrikeCooldown--;
 		}
@@ -209,6 +210,48 @@ var Player = class {
 		}
 	}
 
+	// Return Cooldown for used skill
+	updateCooldownForUsedSkill(skillName, message){
+		console.log(`Resetting ${skillName} cooldown`);
+		// Calculate Sky Strike Skill Stats
+		if (skillName === "Sky Strike"){
+			if (this.currentSkillCooldowns.skyStrikeCooldown === 0){
+				this.currentSkillCooldowns.skyStrikeCooldown = this.baseSkillCooldowns.skyStrikeCooldown;
+			} else {
+				message.channel.send(`${this.username}: ${skillName} is still on cooldown`);
+			}
+		} else if (skillName === "Dragon Tooth"){
+			if (this.currentSkillCooldowns.dragonToothCooldown === 0){
+				this.currentSkillCooldowns.dragonToothCooldown = this.baseSkillCooldowns.dragonToothCooldown;
+			} else {
+				message.channel.send(`${this.username}: ${skillName} is still on cooldown`);
+			}
+		} else if (skillName === "Double Stab"){
+			if (this.currentSkillCooldowns.doubleStabCooldown === 0){
+				this.currentSkillCooldowns.doubleStabCooldown = this.baseSkillCooldowns.doubleStabCooldown;
+			} else {
+				message.channel.send(`${this.username}: ${skillName} is still on cooldown`);
+			}
+		} else if (skillName === "Falling Flower Palm"){
+			if (this.currentSkillCooldowns.fallingFlowerPalmCooldown === 0){
+				this.currentSkillCooldowns.fallingFlowerPalmCooldown = this.baseSkillCooldowns.fallingFlowerPalmCooldown;
+			} else {
+				message.channel.send(`${this.username}: ${skillName} is still on cooldown`);
+			}
+		} else if (skillName === "Circle Swing"){
+			if (this.currentSkillCooldowns.circleSwingCooldown === 0){
+				this.currentSkillCooldowns.circleSwingCooldown = this.baseSkillCooldowns.circleSwingCooldown;
+			} else {
+				message.channel.send(`${this.username}: ${skillName} is still on cooldown`);
+			}
+		} else if (skillName === "Stab"){
+
+		} else if (skillName === "Slash"){
+
+		} else {
+			message.channel.send(`${this.username}: Invalid Skill Input`);
+		}
+	}
 
 	// Calculate Skill Stats
 	calculateSkillValues(skillName){
@@ -636,11 +679,8 @@ module.exports.Game = class {
 			console.log("Error in Damage Calculation")
 		}
 	}
+	
 
-	calculateElo(){
-	  
-	  return Ea;
-	}
 	// Calculate Results when game ends
 	calculateResults(){
 		var challengerPercentRemainingHP = this.challengerPlayer.currentResources.HP/this.challengerPlayer.effectiveMaxResourceStats.HP
